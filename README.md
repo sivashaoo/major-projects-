@@ -44,6 +44,11 @@ ESP32 and HX711 load-cell starter template for shelf-load/occupancy detection.
 
 **Folder:** [smart-retail-inventory/](./smart-retail-inventory/)
 
+### Project 10 — Connected Vehicle Performance and Remote Diagnostics
+Arduino Uno and DS18B20 bench-top temperature monitor with an alert LED. This is a local serial demonstration, not full remote diagnostics or automotive-grade equipment.
+
+**Folder:** [connected-vehicle-diagnostics/](./connected-vehicle-diagnostics/)
+
 ## Repository layout
 
 ```text
@@ -56,7 +61,8 @@ major-projects-/
 ├── soil-monitoring-irrigation/
 ├── wearable-vital-sign-sleep-monitoring/
 ├── sensor-failure-maintenance/
-└── smart-retail-inventory/
+├── smart-retail-inventory/
+└── connected-vehicle-diagnostics/
 ```
 
 ## Notes
