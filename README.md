@@ -23,6 +23,14 @@ A mine-vehicle safety concept for low-visibility conditions, with system archite
 
 Includes simulation files, test planning, hardware interface notes, and supporting documentation.
 
+## 4. IoT-Based Machine Health Monitoring
+
+ESP32-based condition monitoring for vibration estimate, ambient temperature, humidity, and RPM, with TFT display, local alarm, and ThingSpeak logging.
+
+**Folder:** [machine-health-monitoring/](./machine-health-monitoring/)
+
+Includes firmware, hardware pinout, setup notes, and a testing/validation procedure. The current version uses threshold-based detection; AI-based predictive maintenance is a future extension.
+
 ## Repository layout
 
 ```text
