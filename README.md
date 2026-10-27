@@ -1,35 +1,48 @@
 # Major Projects — Electrical & Electronics Engineering
 
-This repository consolidates the project files from three engineering project repositories into one organized portfolio. Each project is stored in its own folder, including source code, documentation, hardware notes, circuit diagrams, and simulation assets where available.
+This repository collects major engineering projects with firmware, hardware connections, setup notes, and testing guidance. Starter code copied from the **Sensor Interfacing Technique Report** is labeled as such; it is not claimed to be experimentally validated.
 
-## 1. Smart Waste Segregation
+## Existing projects
+
+### Smart Waste Segregation
 Automated waste segregation using sensors and motorized sorting mechanisms.
 
 **Folder:** [SMART-WASTE-SEGREGATION/](./SMART-WASTE-SEGREGATION/)
 
-Includes Arduino firmware, circuit diagram, connection notes, and project documentation.
-
-## 2. Transformer Health Monitoring
+### Transformer Health Monitoring
 An IoT-based transformer/electrical equipment monitoring and protection project.
 
 **Folder:** [transformer-health-monitoring/](./transformer-health-monitoring/)
 
-Includes ESP32 firmware, hardware pinout, working principle, and project documentation.
-
-## 3. Mine Vehicle Safety
+### Mine Vehicle Safety
 A mine-vehicle safety concept for low-visibility conditions, with system architecture, safety logic, prototype planning, hardware notes, and an interactive simulation.
 
 **Folder:** [mine-vehicle-safety/](./mine-vehicle-safety/)
 
-Includes simulation files, test planning, hardware interface notes, and supporting documentation.
-
-## 4. IoT-Based Machine Health Monitoring
-
-ESP32-based condition monitoring for vibration estimate, ambient temperature, humidity, and RPM, with TFT display, local alarm, and ThingSpeak logging.
+### Industrial Machine Health Monitoring — Report Project 3
+ESP32 starter template using an analog vibration input, DS18B20 temperature sensor, and alert LED. The original repository firmware remains separate from the PDF template.
 
 **Folder:** [machine-health-monitoring/](./machine-health-monitoring/)
 
-Includes firmware, hardware pinout, setup notes, and a testing/validation procedure. The current version uses threshold-based detection; AI-based predictive maintenance is a future extension.
+### Project 1 — Soil Monitoring and Automated Irrigation
+Arduino Uno starter template with capacitive soil-moisture sensing, relay control, hysteresis, wiring notes, and calibration guidance.
+
+**Folder:** [soil-monitoring-irrigation/](./soil-monitoring-irrigation/)
+
+### Project 4 — Wearable Vital-Sign and Sleep-Quality Monitoring
+ESP32 I²C scanner template for MAX30102 and MPU6050 module bring-up. The supplied code scans for I²C devices; it does not yet acquire pulse or motion data.
+
+**Folder:** [wearable-vital-sign-sleep-monitoring/](./wearable-vital-sign-sleep-monitoring/)
+
+### Project 7 — Sensor-Based Failure Detection and Maintenance Scheduling
+Arduino Uno generic analog monitor with threshold alert and event counter.
+
+**Folder:** [sensor-failure-maintenance/](./sensor-failure-maintenance/)
+
+### Project 8 — Smart Retail Inventory and Customer-Experience Monitoring
+ESP32 and HX711 load-cell starter template for shelf-load/occupancy detection.
+
+**Folder:** [smart-retail-inventory/](./smart-retail-inventory/)
 
 ## Repository layout
 
@@ -38,10 +51,18 @@ major-projects-/
 ├── README.md
 ├── SMART-WASTE-SEGREGATION/
 ├── transformer-health-monitoring/
-└── mine-vehicle-safety/
+├── mine-vehicle-safety/
+├── machine-health-monitoring/
+├── soil-monitoring-irrigation/
+├── wearable-vital-sign-sleep-monitoring/
+├── sensor-failure-maintenance/
+└── smart-retail-inventory/
 ```
 
 ## Notes
-- These are consolidated copies of the original project files; the original repositories remain unchanged.
-- Review each project folder's README for setup and usage instructions.
-- Clearly distinguish simulation results from hardware-tested results.
+- The sensor-interfacing project folders preserve the report's starter-code logic and document its connection guidance.
+- Calibrate sensor thresholds and scale factors for the exact modules before testing.
+- Compile and test each sketch with the intended hardware before claiming a working prototype.
+- Use low-voltage demonstration circuits, suitable drivers, fuses, isolation, and enclosures where required.
+- Keep secrets such as Wi-Fi credentials and API keys out of public commits.
+- Distinguish proposed/expected results from measured results in project documentation.
