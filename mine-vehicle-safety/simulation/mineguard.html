@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MineGuard — Safe & Efficient Operation of Mine Vehicles in Fog | SIH Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d11;
+  --bg-grad:radial-gradient(1200px 600px at 15% -10%, #121820 0%, #0a0d11 55%), radial-gradient(900px 500px at 100% 0%, #0e1518 0%, #0a0d11 60%);
+  --panel:#12171d;
+  --panel2:#1a2129;
+  --line:#2a333d;
+  --line-bright:#3a4652;
+  --text:#e8eef4;
+  --text-dim:#9aa8b5;
+  --text-faint:#6b7a88;
+  --amber:#e0a43b;
+  --safe:#2dd4a0;
+  --warn:#e0b83a;
+  --crit:#f05555;
+  --accent:#2eb8e0;
+  --accent2:#7b7ef0;
+  --mono: 'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  --sans: 'Inter','Segoe UI',Arial,sans-serif;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+  --shadow-md: 0 8px 24px -10px rgba(0,0,0,.55);
+  --shadow-glow: 0 0 0 1px rgba(46,184,224,.12), 0 8px 30px -10px rgba(46,184,224,.25);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+body{min-height:100vh;background-image:var(--bg-grad);background-attachment:fixed;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--line-bright);border-radius:4px;}
+
+/* ---------- Header ---------- */
+header.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 22px;border-bottom:1px solid var(--line);
+  background:rgba(12,16,22,.92);backdrop-filter:blur(10px) saturate(140%);
+  position:sticky;top:0;z-index:50;
+  flex-wrap:wrap;gap:8px;
+  box-shadow:0 1px 0 rgba(0,0,0,.4), var(--shadow-sm);
+}
+.brand{display:flex;align-items:center;gap:11px;}
+.brand-mark{
+  width:36px;height:36px;border-radius:9px;
+  background:conic-gradient(from 220deg,var(--accent),var(--accent2),var(--accent));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#ffffff;font-size:15px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.25) inset, 0 6px 16px -4px rgba(14,127,163,.45);
+  letter-spacing:-.5px;
+}
+.brand h1{font-size:15.5px;margin:0;letter-spacing:.2px;font-weight:700;}
+.brand p{margin:0;font-size:10.5px;color:var(--text-faint);letter-spacing:.6px;text-transform:uppercase;font-weight:500;}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pill{
+  font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:20px;
+  border:1px solid var(--line-bright);color:var(--text-dim);background:var(--panel);
+  box-shadow:var(--shadow-sm);
+}
+.btn{
+  font-family:var(--sans);font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:7px;
+  border:1px solid var(--line-bright);background:var(--panel2);color:var(--text);cursor:pointer;
+  transition:.15s cubic-bezier(.4,0,.2,1);white-space:nowrap;box-shadow:var(--shadow-sm);
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(57,201,236,.35);}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#0b6f8f);color:#ffffff;border:none;box-shadow:0 4px 14px -4px rgba(14,127,163,.45);}
+.btn.primary:hover{filter:brightness(1.08);color:#ffffff;transform:translateY(-1px);}
+.btn.danger{border-color:#4a2626;color:#ef8080;}
+.btn.danger:hover{border-color:var(--crit);color:var(--crit);box-shadow:0 4px 12px -4px rgba(240,75,75,.35);}
+.btn:active{transform:translateY(0px) scale(.98);}
+.btn.small{padding:6px 10px;font-size:11px;}
+.btn.active{background:var(--accent);color:#ffffff;border-color:var(--accent);}
+
+/* ---------- Layout ---------- */
+.wrap{max-width:1720px;margin:0 auto;padding:14px;}
+.grid{display:grid;grid-template-columns:290px 1fr 320px;gap:12px;align-items:start;}
+@media(max-width:1200px){.grid{grid-template-columns:1fr;}}
+
+.panel{
+  background:linear-gradient(180deg, var(--panel) 0%, #0e1318 100%);
+  border:1px solid var(--line);border-radius:12px;
+  padding:15px 15px 16px;margin-bottom:12px;
+  box-shadow:var(--shadow-md);
+  position:relative;
+}
+.panel h2{
+  font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--text-dim);
+  margin:0 0 13px 0;display:flex;align-items:center;gap:8px;font-weight:700;
+  padding-bottom:10px;border-bottom:1px solid var(--line);
+}
+.panel h2 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px 1px var(--accent);}
+.panel h2 .sub{margin-left:auto;font-family:var(--mono);font-weight:400;font-size:10px;color:var(--text-faint);}
+
+/* ---------- Controls ---------- */
+.field{margin-bottom:12px;}
+.field label{
+  display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-bottom:5px;
+}
+.field label span.val{font-family:var(--mono);color:var(--accent);}
+input[type=range]{
+  width:100%;accent-color:var(--accent);height:4px;
+}
+.seg{display:flex;gap:4px;background:var(--panel2);padding:3px;border-radius:7px;border:1px solid var(--line);}
+.seg button{
+  flex:1;padding:6px 4px;font-size:11px;border-radius:5px;border:none;background:transparent;
+  color:var(--text-dim);cursor:pointer;font-weight:600;font-family:var(--sans);
+}
+.seg button.on{background:var(--accent);color:#ffffff;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:12px;}
+.switch{position:relative;width:38px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider-tg{position:absolute;cursor:pointer;inset:0;background:#3a4652;border-radius:20px;transition:.2s;}
+.slider-tg:before{content:"";position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#e8eef4;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.45);}
+.switch input:checked + .slider-tg{background:var(--safe);}
+.switch input:checked + .slider-tg:before{transform:translateX(18px);background:#ffffff;}
+hr.div{border:none;border-top:1px solid var(--line);margin:12px 0;}
+.mini-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-faint);margin:10px 0 6px;}
+
+/* ---------- Central sim ---------- */
+.sim-shell{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#060a0d;box-shadow:var(--shadow-md);}
+#roadCanvas{display:block;width:100%;height:340px;background:#060a0d;}
+.status-banner{
+  position:absolute;top:0;left:0;right:0;padding:11px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-weight:700;letter-spacing:.5px;font-size:13px;
+  transition:.25s;z-index:5;backdrop-filter:blur(6px);
+}
+.status-banner.safe{background:rgba(51,209,155,.14);color:var(--safe);border-bottom:1px solid rgba(51,209,155,.4);}
+.status-banner.warn{background:rgba(240,203,63,.18);color:var(--warn);border-bottom:1px solid rgba(240,203,63,.45);animation:pulseWarn 1.1s infinite;}
+.status-banner.crit{background:rgba(240,75,75,.22);color:var(--crit);border-bottom:1px solid rgba(240,75,75,.5);animation:pulseCrit .55s infinite;}
+@keyframes pulseWarn{0%,100%{filter:brightness(1);}50%{filter:brightness(1.35);}}
+@keyframes pulseCrit{0%,100%{filter:brightness(1);}50%{filter:brightness(1.6);}}
+.status-right{font-size:11px;font-weight:600;opacity:.85;}
+
+.scenario-bar{display:flex;flex-wrap:wrap;gap:6px;padding:11px;background:var(--panel2);border-top:1px solid var(--line);}
+.scenario-bar .btn{font-size:11px;padding:6px 11px;}
+
+/* ---------- risk badge ---------- */
+.risk-badge-wrap{display:flex;align-items:center;gap:16px;padding:16px 18px;background:linear-gradient(180deg,var(--panel),#0e1318);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow-md);}
+.risk-circle{
+  width:80px;height:80px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border:4px solid var(--line-bright);font-family:var(--mono);
+  transition:.3s;background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.04), transparent 60%);
+}
+.risk-circle .num{font-size:23px;font-weight:800;letter-spacing:-.5px;}
+.risk-circle .lab{font-size:8px;letter-spacing:1.4px;color:var(--text-faint);font-weight:600;}
+.risk-circle.safe{border-color:var(--safe);color:var(--safe);box-shadow:0 0 22px -4px rgba(51,209,155,.55);}
+.risk-circle.warn{border-color:var(--warn);color:var(--warn);box-shadow:0 0 22px -4px rgba(240,203,63,.55);}
+.risk-circle.crit{border-color:var(--crit);color:var(--crit);box-shadow:0 0 26px -2px rgba(240,75,75,.65);}
+.risk-text{flex:1;}
+.risk-text .headline{font-size:16.5px;font-weight:800;letter-spacing:.2px;font-family:var(--mono);}
+.risk-text .desc{font-size:11.5px;color:var(--text-dim);margin-top:4px;line-height:1.45;}
+.risk-text .headline.safe{color:var(--safe);}
+.risk-text .headline.warn{color:var(--warn);}
+.risk-text .headline.crit{color:var(--crit);}
+
+/* ---------- readouts ---------- */
+.readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.readout{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+  transition:.2s;
+}
+.readout .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-faint);font-weight:600;}
+.readout .v{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:3px;}
+.readout .v.safe{color:var(--safe);}
+.readout .v.warn{color:var(--warn);}
+.readout .v.crit{color:var(--crit);}
+.readout .v.dim{color:var(--text-dim);font-size:12px;font-weight:600;}
+
+/* ---------- sensor / fusion cards ---------- */
+.sensor-card{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px;margin-bottom:8px;}
+.sensor-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.sensor-card .head .name{font-size:11.5px;font-weight:700;}
+.status-chip{
+  font-family:var(--mono);font-size:9.5px;padding:3px 9px;border-radius:10px;font-weight:700;letter-spacing:.4px;
+}
+.status-chip.ok{background:rgba(51,209,155,.15);color:var(--safe);box-shadow:0 0 0 1px rgba(51,209,155,.2) inset;}
+.status-chip.deg{background:rgba(240,203,63,.15);color:var(--warn);box-shadow:0 0 0 1px rgba(240,203,63,.2) inset;}
+.status-chip.fail{background:rgba(240,75,75,.18);color:var(--crit);box-shadow:0 0 0 1px rgba(240,75,75,.25) inset;}
+.sensor-card .body{font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.6;}
+
+canvas.mini{display:block;width:100%;height:110px;background:#05080a;border-radius:8px;border:1px solid var(--line);margin-top:7px;}
+
+/* ---------- flow diagram ---------- */
+.flow-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;padding:10px 4px;}
+.flow-node{
+  font-family:var(--mono);font-size:10px;font-weight:700;padding:8px 10px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--line-bright);color:var(--text-dim);text-align:center;min-width:88px;
+  transition:.2s;
+}
+.flow-node.active{background:rgba(58,200,232,.15);border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px -2px var(--accent);}
+.flow-arrow{color:var(--text-faint);font-size:14px;}
+
+/* ---------- timeline ---------- */
+.timeline{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;font-family:var(--mono);font-size:11px;}
+.tl-item{display:flex;gap:8px;padding:4px 6px;border-radius:5px;border-left:3px solid var(--line-bright);}
+.tl-item.safe{border-color:var(--safe);}
+.tl-item.warn{border-color:var(--warn);background:rgba(232,201,58,.06);}
+.tl-item.crit{border-color:var(--crit);background:rgba(239,75,75,.08);}
+.tl-item .t{color:var(--text-faint);flex-shrink:0;}
+
+/* ---------- tables ---------- */
+table.ctable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
+table.ctable th{text-align:left;color:var(--text-faint);font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;padding:4px 6px;border-bottom:1px solid var(--line);}
+table.ctable td{padding:6px 6px;border-bottom:1px solid var(--line);}
+.tag{padding:2px 7px;border-radius:10px;font-size:9.5px;font-weight:700;}
+.tag.safe{background:rgba(57,201,143,.15);color:var(--safe);}
+.tag.warn{background:rgba(232,201,58,.15);color:var(--warn);}
+.tag.crit{background:rgba(239,75,75,.18);color:var(--crit);}
+
+.note{font-size:10.5px;color:var(--text-faint);line-height:1.5;padding:8px 10px;background:var(--panel2);border-radius:6px;border:1px dashed var(--line-bright);margin-top:8px;}
+.note b{color:var(--text-dim);}
+
+.footer-panel{grid-column:1/-1;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:800px){.two-col{grid-template-columns:1fr;}}
+ul.limits{margin:6px 0 0 18px;padding:0;font-size:12px;color:var(--text-dim);line-height:1.7;}
+ul.limits li b{color:var(--text);}
+
+.assump{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);background:var(--panel2);border-radius:6px;padding:8px 10px;line-height:1.7;border:1px solid var(--line);}
+.assump input{
+  width:52px;background:#0a0d11;border:1px solid var(--line-bright);color:var(--accent);
+  font-family:var(--mono);font-size:10.5px;border-radius:4px;padding:2px 4px;text-align:right;
+}
+
+.effrow{display:flex;justify-content:space-between;font-size:11.5px;padding:5px 0;border-bottom:1px solid var(--line);}
+.effrow b{font-family:var(--mono);}
+
+.pause-overlay{
+  position:absolute;inset:0;z-index:8;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  background:rgba(6,10,13,.72);backdrop-filter:blur(1px);
+  transition:opacity .2s;
+}
+.pause-overlay.hidden{display:none;}
+.pause-title{font-family:var(--mono);font-size:16px;font-weight:800;color:var(--accent);letter-spacing:.5px;}
+.pause-sub{font-size:12px;color:var(--text-dim);margin-top:6px;}
+.pause-sub b{color:var(--text);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">MG</div>
+    <div>
+      <h1>MineGuard — Safe &amp; Efficient Mine Vehicles in Fog</h1>
+      <p>SIH Prototype · Open-Cast Iron Ore Mines · Low-Visibility Operations</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span class="pill" id="clockPill">SIM T+0s</span>
+    <button class="btn" id="resetBtn">Reset</button>
+    <button class="btn primary" id="startBtn">▶ Start Simulation</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- risk badge row -->
+  <div class="risk-badge-wrap">
+    <div class="risk-circle safe" id="riskCircle">
+      <div class="num" id="riskNum">4</div>
+      <div class="lab">RISK</div>
+    </div>
+    <div class="risk-text">
+      <div class="headline safe" id="riskHeadline">SAFE — NORMAL OPERATION</div>
+      <div class="desc" id="riskDesc">Distance exceeds the dynamically calculated safe stopping margin for current speed and visibility.</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ===================== LEFT: CONTROL PANEL ===================== -->
+    <div class="left-col">
+      <div class="panel">
+        <h2><span class="dot"></span>Environment</h2>
+        <div class="field">
+          <label>Visibility / Fog Distance <span class="val" id="visVal">120 m</span></label>
+          <input type="range" id="visSlider" min="5" max="200" value="120">
+        </div>
+        <div class="seg" id="fogModeSeg">
+          <button data-mode="normal" class="on">Normal</button>
+          <button data-mode="light">Light Fog</button>
+          <button data-mode="dense">Dense Fog</button>
+        </div>
+        <div class="toggle-row"><span>Dust</span><label class="switch"><input type="checkbox" id="dustToggle"><span class="slider-tg"></span></label></div>
+        <div class="toggle-row"><span>Rain</span><label class="switch"><input type="checkbox" id="rainToggle"><span class="slider-tg"></span></label></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent2)"></span>Ego Vehicle — TRUCK-01</h2>
+        <div class="field">
+          <label>Speed <span class="val" id="egoSpeedVal">28 km/h</span></label>
+          <input type="range" id="egoSpeed" min="0" max="60" value="28">
+        </div>
+        <div class="seg" id="egoDirSeg">
+          <button data-dir="1" class="on">Forward</button>
+          <button data-dir="-1">Reverse</button>
+        </div>
+        <div class="mini-label">Load state</div>
+        <div class="seg" id="egoLoadSeg">
+          <button data-load="loaded" class="on">Loaded</button>
+          <button data-load="empty">Empty</button>
+        </div>
+        <div class="mini-label">Camera perspective</div>
+        <div class="seg" id="viewSeg">
+          <button data-view="ego" class="on">TRUCK-01</button>
+          <button data-view="other">TRUCK-02</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--amber)"></span>Other Vehicle — TRUCK-02</h2>
+        <div class="field">
+          <label>Speed <span class="val" id="otherSpeedVal">0 km/h</span></label>
+          <input type="range" id="otherSpeed" min="0" max="60" value="0">
+        </div>
+        <div class="seg" id="otherDirSeg">
+          <button data-dir="1">Toward Ego</button>
+          <button data-dir="-1" class="on">Away</button>
+        </div>
+        <div class="mini-label">Motion mode</div>
+        <div class="seg" id="otherModeSeg">
+          <button data-mode="stationary" class="on">Stationary</button>
+          <button data-mode="slow">Slow</button>
+          <button data-mode="moving">Moving</button>
+        </div>
+        <div class="mini-label">Load state</div>
+        <div class="seg" id="otherLoadSeg">
+          <button data-load="loaded">Loaded</button>
+          <button data-load="empty" class="on">Empty</button>
+        </div>
+        <hr class="div">
+        <div class="toggle-row"><span>Opposite lane blocked <span style="color:var(--text-faint)">(demo control)</span></span><label class="switch"><input type="checkbox" id="oppLaneBlocked"><span class="slider-tg"></span></label></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent2)"></span>Mine Traffic Conflict Rule<span class="sub">≤10m proximity</span></h2>
+        <div class="field">
+          <label>Critical proximity threshold <span class="val" id="critThreshVal">10 m</span></label>
+          <input type="range" id="critThreshSlider" min="4" max="25" value="10">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--safe)"></span>Sensors &amp; Communication</h2>
+        <div class="toggle-row"><span>Thermal Camera</span><label class="switch"><input type="checkbox" id="thermalOn" checked><span class="slider-tg"></span></label></div>
+        <div class="toggle-row"><span>LiDAR</span><label class="switch"><input type="checkbox" id="lidarOn" checked><span class="slider-tg"></span></label></div>
+        <div class="toggle-row"><span>GPS</span><label class="switch"><input type="checkbox" id="gpsOn" checked><span class="slider-tg"></span></label></div>
+        <div class="toggle-row"><span>Communication (V2X ↔ Control Room)</span><label class="switch"><input type="checkbox" id="commOn" checked><span class="slider-tg"></span></label></div>
+        <hr class="div">
+        <div class="note"><b>Manual fault control:</b> Use the switches above to enable or disable each sensor/link. Turning a sensor OFF is treated as a fault and is reported to the control room.</div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent)"></span>AI Object Detection</h2>
+        <div class="toggle-row"><span>AI Detection Enabled</span><label class="switch"><input type="checkbox" id="aiOn" checked><span class="slider-tg"></span></label></div>
+        <div class="field">
+          <label>AI Confidence <span class="val" id="confVal">91%</span></label>
+          <input type="range" id="confSlider" min="20" max="99" value="91">
+        </div>
+        <div class="mini-label">Object type (ground truth for simulation)</div>
+        <div class="seg" id="objTypeSeg" style="flex-wrap:wrap;">
+          <button data-obj="Truck" class="on">Truck</button>
+          <button data-obj="Person">Person</button>
+          <button data-obj="Rock">Rock</button>
+          <button data-obj="Unknown">Unknown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== CENTER: SIMULATION ===================== -->
+    <div class="center-col">
+      <div class="sim-shell">
+        <div class="status-banner safe" id="statusBanner">
+          <span id="statusText">🟢 SAFE — NORMAL OPERATION</span>
+          <span class="status-right" id="statusRight">Sensor fusion nominal</span>
+        </div>
+        <canvas id="roadCanvas"></canvas>
+        <div class="pause-overlay" id="pauseOverlay">
+          <div>
+            <div class="pause-title">⏸ SIMULATION PAUSED</div>
+            <div class="pause-sub">Adjust controls as needed, then press <b>Start Simulation</b></div>
+          </div>
+        </div>
+        <div class="scenario-bar" id="scenarioBar">
+          <button class="btn small" data-sc="1">1 · Normal Visibility</button>
+          <button class="btn small" data-sc="2">2 · Light Fog</button>
+          <button class="btn small" data-sc="3">3 · Dense Fog</button>
+          <button class="btn small" data-sc="4">4 · Stationary Truck Ahead</button>
+          <button class="btn small" data-sc="5">5 · Blind Corner</button>
+          <button class="btn small" data-sc="6">6 · Comm Failure</button>
+          <button class="btn small" data-sc="7">7 · Thermal Failure</button>
+          <button class="btn small" data-sc="8">8 · LiDAR Degradation</button>
+        </div>
+      </div>
+
+      <!-- Driver cabin -->
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent2)"></span>Driver Cabin Display — TRUCK-01<span class="sub">what the operator sees</span></h2>
+        <button class="btn danger" id="resumeBtn" style="width:100%;margin-bottom:10px;display:none;">▶ Resume Manual Control (Auto-Stop Engaged)</button>
+        <div class="readout-grid" id="cabinGrid">
+          <div class="readout"><div class="k">Speed</div><div class="v" id="cSpeed">28 km/h</div></div>
+          <div class="readout"><div class="k">Visibility</div><div class="v" id="cVis">120 m</div></div>
+          <div class="readout"><div class="k">Object Classification</div><div class="v dim" id="cObj">TRUCK</div></div>
+          <div class="readout"><div class="k">Distance to Object</div><div class="v" id="cDist">–</div></div>
+          <div class="readout"><div class="k">Risk Score</div><div class="v" id="cRisk">4/100</div></div>
+          <div class="readout"><div class="k">Status</div><div class="v safe" id="cStatus">SAFE</div></div>
+          <div class="readout"><div class="k">Thermal Camera</div><div class="v dim" id="cThermal">OK</div></div>
+          <div class="readout"><div class="k">LiDAR</div><div class="v dim" id="cLidar">OK</div></div>
+          <div class="readout"><div class="k">Communication</div><div class="v dim" id="cComm">LINKED</div></div>
+          <div class="readout"><div class="k">Calculated Safe Distance</div><div class="v dim" id="cSafeDist">– m</div></div>
+          <div class="readout"><div class="k">Pedestrian / Horn</div><div class="v safe" id="cHornStatus">CLEAR</div></div>
+          <div class="readout"><div class="k">Active Faults</div><div class="v dim" id="cFaults">None</div></div>
+        </div>
+      </div>
+
+      <!-- Data flow -->
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent)"></span>System Data Flow</h2>
+        <div class="flow-wrap" id="flowWrap"></div>
+      </div>
+
+      <!-- Sensor fusion + risk engine -->
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--safe)"></span>Sensor Fusion → Collision Risk Engine</h2>
+        <table class="ctable">
+          <tr><th>Input</th><th>Source</th><th>Value</th></tr>
+          <tr><td>Object classification</td><td>Thermal Camera + AI</td><td id="fClass">TRUCK — 91%</td></tr>
+          <tr><td>Distance</td><td>LiDAR</td><td id="fDist">– m</td></tr>
+          <tr><td>Position / heading</td><td>GPS</td><td id="fGps">OK</td></tr>
+          <tr><td>Ego speed</td><td>Vehicle bus</td><td id="fSpeed">– km/h</td></tr>
+          <tr><td>Relative speed</td><td>Fusion</td><td id="fRel">– km/h</td></tr>
+          <tr><td>Required safe distance</td><td>Dynamic model</td><td id="fSafe">– m</td></tr>
+          <tr><td>Fog speed policy</td><td>MineGuard SOP</td><td id="fRecSpeed">– km/h</td></tr>
+        </table>
+        <div class="note"><b>Risk Score</b> = weighted function of (safe-distance deficit, relative speed, visibility, object class, sensor confidence, speed vs fog policy). Thresholds are configurable below.</div>
+        <div class="assump" style="margin-top:8px;">
+          Threshold — Safe ≤ <input type="number" id="thSafe" value="30" min="1" max="98"> &nbsp;|&nbsp;
+          Warning ≤ <input type="number" id="thWarn" value="65" min="2" max="99"> &nbsp;|&nbsp; Critical above.
+        </div>
+      </div>
+
+      <!-- Physics-based efficiency module -->
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--warn)"></span>Efficiency Module<span class="sub">live physics-based estimate</span></h2>
+        <div class="two-col">
+          <div>
+            <div class="mini-label">Live operating measurements</div>
+            <div class="effrow"><span>Overall efficiency</span><b id="eOverall">– %</b></div>
+            <div class="effrow"><span>Energy efficiency</span><b id="eEnergyEff">– %</b></div>
+            <div class="effrow"><span>Operational efficiency</span><b id="eOperationalEff">– %</b></div>
+            <div class="effrow"><span>Safety–efficiency balance</span><b id="eBalance">– %</b></div>
+            <div class="effrow"><span>Average speed</span><b id="eAvgSpeed">– km/h</b></div>
+            <div class="effrow"><span>Productive distance</span><b id="eDistance">0.00 km</b></div>
+            <div class="effrow"><span>Energy consumed</span><b id="eEnergy">0.00 kWh</b></div>
+            <div class="effrow"><span>Session time</span><b id="eSessTime">0 s</b></div>
+          </div>
+          <div>
+            <div class="mini-label">Efficiency penalties / safety events</div>
+            <div class="effrow"><span>Moving time</span><b id="eMovingTime">0 s</b></div>
+            <div class="effrow"><span>Stop / delay time</span><b id="eStopTime">0 s</b></div>
+            <div class="effrow"><span>Reverse distance</span><b id="eReverse">0 m</b></div>
+            <div class="effrow"><span>Warnings issued</span><b id="eWarnCount">0</b></div>
+            <div class="effrow"><span>Critical events</span><b id="eCritCount">0</b></div>
+            <div class="effrow"><span>Collisions</span><b id="eCollisionCount">0</b></div>
+            <div class="effrow"><span>Estimated delay</span><b id="eDelay">0 s</b></div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:8px;">Energy is estimated from vehicle mass, rolling resistance, aerodynamic drag, acceleration and drivetrain efficiency. Overall efficiency combines energy and productive-operation efficiency. Safety–efficiency balance rewards productive motion while penalising critical risk and collisions — the core goal of safe-and-efficient fog operations.</div>
+      </div>
+
+      <!-- MineGuard Intelligence — fog / low-visibility advisory -->
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent2)"></span>MineGuard Intelligence<span class="sub">fog &amp; low-visibility SOP</span></h2>
+        <div class="readout-grid">
+          <div class="readout"><div class="k">Recommended Max Speed</div><div class="v" id="mgRecSpeed">– km/h</div></div>
+          <div class="readout"><div class="k">Policy Status</div><div class="v dim" id="mgPolicy">–</div></div>
+          <div class="readout"><div class="k">Surface Friction µ</div><div class="v dim" id="mgMu">–</div></div>
+          <div class="readout"><div class="k">Achievable Decel</div><div class="v dim" id="mgDecel">– m/s²</div></div>
+          <div class="readout"><div class="k">Sensor Health</div><div class="v dim" id="mgHealth">– %</div></div>
+          <div class="readout"><div class="k">Sight vs Stopping</div><div class="v dim" id="mgSight">–</div></div>
+        </div>
+        <div class="note" id="mgAdvice" style="margin-top:8px;"><b>Advisory:</b> System initialising visibility-adaptive speed policy for open-cast iron ore haul roads.</div>
+      </div>
+    </div>
+
+    <!-- ===================== RIGHT: CONTROL ROOM ===================== -->
+    <div class="right-col">
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--crit)"></span>Control Room Dashboard</h2>
+        <table class="ctable">
+          <tr><th>Vehicle</th><th>Speed</th><th>Risk</th><th>Status</th></tr>
+          <tr><td>TRUCK-01</td><td id="crEgoSpeed">28</td><td id="crEgoRisk">4</td><td id="crEgoStatus"><span class="tag safe">SAFE</span></td></tr>
+          <tr><td>TRUCK-02</td><td id="crOtherSpeed">0</td><td id="crOtherRisk">2</td><td id="crOtherStatus"><span class="tag safe">SAFE</span></td></tr>
+        </table>
+        <div class="mini-label">Comms link</div>
+        <div class="readout" id="crCommBox">
+          <div class="k">Status</div><div class="v safe" id="crCommStatus">COMMUNICATION LINKED</div>
+        </div>
+        <div class="mini-label">Latest fault reported to control tower</div>
+        <div class="readout" style="margin-bottom:8px;">
+          <div class="k">Fault Report</div><div class="v dim" id="crFaultReport">No faults reported</div>
+        </div>
+        <div class="mini-label">Traffic conflict resolution</div>
+        <div class="readout">
+          <div class="k">State</div><div class="v safe" id="crConflictState">NONE</div>
+        </div>
+        <div id="crAlertBox"></div>
+        <div class="note">Priority at junctions/blind corners is based on predefined mine traffic-management rules — not assumed automatically.</div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--amber)"></span>Thermal Camera</h2>
+        <div class="sensor-card">
+          <div class="head"><span class="name">TC-01 Front</span><span class="status-chip ok" id="thermalChip">OK</span></div>
+          <div class="body" id="thermalBody">TRUCK — 91% confidence</div>
+        </div>
+        <canvas class="mini" id="thermalCanvas"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent)"></span>LiDAR</h2>
+        <div class="sensor-card">
+          <div class="head"><span class="name">LiDAR-01</span><span class="status-chip ok" id="lidarChip">OK</span></div>
+          <div class="body" id="lidarBody">OBJECT DETECTED — distance pending</div>
+        </div>
+        <canvas class="mini" id="lidarCanvas"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--accent2)"></span>Fail-Safe State</h2>
+        <div class="readout" style="margin-bottom:8px;">
+          <div class="k">Mode</div><div class="v safe" id="failsafeMode">NORMAL — CONTROL ROOM LINKED</div>
+        </div>
+        <div class="note" id="failsafeNote"><b>Note:</b> If communication is lost, on-vehicle sensors and driver warnings keep operating locally. Safety does not depend on the control-room link.</div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="dot" style="background:var(--safe)"></span>Event Timeline</h2>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  visibility: 120,
+  fogMode: 'normal',
+  dust: false, rain: false,
+  ego: { speed:28, dir:1, load:'loaded', pos:0, lane:'main', originalDir:1 },
+  other: { speed:0, dir:-1, mode:'stationary', load:'empty', pos:260, lane:'main', originalDir:-1 },
+  sensors: { thermal:true, lidar:true, gps:true, comm:true },
+  failures: { thermal:false, lidar:false, comm:false },
+  ai: { on:true, conf:91, objType:'Truck' },
+  // Open-cast iron-ore haul assumptions (engineering defaults for prototype)
+  // Loaded ~120 t GVW class; empty ~70 t. Reaction includes operator + system latency.
+  assump: {
+    reaction:1.5,
+    decelLoaded:2.5,      // m/s² on dry haul road, loaded
+    decelEmpty:3.5,       // m/s² empty
+    fogFactor:1.4,        // inflate stopping demand when fog < stopping distance
+    buffer:8,             // fixed safety buffer (m)
+    gradePct:3,           // typical open-cast ramp grade (%)
+    muDry:0.55,           // tyre–road friction coefficient dry
+    muDust:0.40,          // dusty haul surface
+    muWet:0.35            // rain-affected surface
+  },
+  thresholds: { safe:30, warn:65 },
+  // Visibility-adaptive speed policy (mine SOP style, km/h caps)
+  speedPolicy: { clear:45, lightFog:30, denseFog:18, sensorDegraded:15 },
+  lastAdvisoryKey:null,
+  scenario: 'manual',
+  simTime:0,
+  metrics:{ speedSamples:[], stopTime:0, movingTime:0, productiveDistance:0, reverseDistance:0, energyKwh:0, lastPos:0, warnCount:0, critCount:0, collisionCount:0, lastStatus:'safe', delay:0 },
+  lastEventStatus:null,
+  collisionActive:false,
+  collisionFlash:0,
+  running:false,
+  autoStop:{ engaged:false, reason:null },
+  commFailTimer:null,
+  commFailureStartedAt:null,
+  criticalProximity:10,
+  oppLaneBlocked:false,
+  conflict:{ active:false, phase:null, emptyRef:null, loadedRef:null, yieldRef:null, passRef:null, laneOffset:0, reverseSpeed:8, loadedResumeSpeed:0, reverseVisualDir:null, reverseStartPos:0, reverseDir:-1, turnTimer:0, originalDir:1, turnProgress:0, turnBayOffset:0, completedEncounter:false, priorityAssigned:false, priorityRef:null, blockedLaneReported:false, reverseDistance:0, reverseDistanceTarget:18, turnBayClearance:30 },
+  lastFaultReport:null,
+  personEvent:{ active:false, phase:null, laneOffset:0, timer:0, walkProgress:0 },
+  hornAudio:null,
+  // Rock is a fixed hazard — it never changes lane. The ego truck either
+  // steers left around it or stops and reports if the opposite lane is blocked.
+  rockEvent:{ active:false, phase:null, laneOffset:0, timer:0, reported:false, passTravelDir:1, completed:false },
+  viewRef:'ego',
+};
+
+/* ============================================================
+   DOM refs
+============================================================ */
+const $ = id => document.getElementById(id);
+const visSlider=$('visSlider'), visVal=$('visVal');
+const egoSpeed=$('egoSpeed'), egoSpeedVal=$('egoSpeedVal');
+const otherSpeed=$('otherSpeed'), otherSpeedVal=$('otherSpeedVal');
+const confSlider=$('confSlider'), confVal=$('confVal');
+
+/* ============================================================
+   WIRE UP CONTROLS
+============================================================ */
+visSlider.addEventListener('input', e=>{
+  state.visibility=+e.target.value; visVal.textContent=state.visibility+' m'; syncFogModeFromSlider();
+  if(state.scenario==='blindcorner') state.scenario='manual'; // manual fog change exits the blind-corner preset
+});
+function syncFogModeFromSlider(){
+  let mode = state.visibility>100?'normal':(state.visibility>=30?'light':'dense');
+  state.fogMode = mode;
+  setSeg('fogModeSeg','mode',mode);
+}
+setSegHandler('fogModeSeg','mode', v=>{
+  state.fogMode=v;
+  state.visibility = v==='normal'?150 : v==='light'?60 : 15;
+  visSlider.value=state.visibility; visVal.textContent=state.visibility+' m';
+  if(state.scenario==='blindcorner') state.scenario='manual'; // manual fog change exits the blind-corner preset
+});
+
+$('dustToggle').addEventListener('change', e=> state.dust=e.target.checked);
+$('rainToggle').addEventListener('change', e=> state.rain=e.target.checked);
+
+egoSpeed.addEventListener('input', e=>{ state.ego.speed=+e.target.value; egoSpeedVal.textContent=state.ego.speed+' km/h'; });
+setSegHandler('egoDirSeg','dir', v=> state.ego.dir=+v);
+setSegHandler('egoLoadSeg','load', v=> state.ego.load=v);
+setSegHandler('viewSeg','view', v=> state.viewRef=v);
+
+otherSpeed.addEventListener('input', e=>{ state.other.speed=+e.target.value; otherSpeedVal.textContent=state.other.speed+' km/h'; });
+setSegHandler('otherDirSeg','dir', v=> state.other.dir=+v);
+setSegHandler('otherModeSeg','mode', v=>{
+  state.other.mode=v;
+  if(v==='stationary'){ state.other.speed=0; otherSpeed.value=0; otherSpeedVal.textContent='0 km/h'; }
+  if(v==='slow'){ state.other.speed=10; otherSpeed.value=10; otherSpeedVal.textContent='10 km/h'; }
+  if(v==='moving'){ state.other.speed=30; otherSpeed.value=30; otherSpeedVal.textContent='30 km/h'; }
+});
+setSegHandler('otherLoadSeg','load', v=> state.other.load=v);
+$('oppLaneBlocked').addEventListener('change', e=> state.oppLaneBlocked=e.target.checked);
+const critThreshSlider=$('critThreshSlider'), critThreshVal=$('critThreshVal');
+critThreshSlider.addEventListener('input', e=>{ state.criticalProximity=+e.target.value; critThreshVal.textContent=state.criticalProximity+' m'; });
+
+function setManualSensorState(kind, enabled){
+  state.sensors[kind] = enabled;
+  state.failures[kind] = !enabled;
+  const names={thermal:'THERMAL CAMERA',lidar:'LiDAR',gps:'GPS',comm:'COMMUNICATION LINK'};
+  if(!enabled){
+    if(kind==='thermal'){
+      addTimelineEvent('crit','⚠ THERMAL CAMERA FAULTED — vehicle slowing for reduced classification confidence.');
+      reportFaultToControlTower('THERMAL CAMERA faulted on TRUCK-01 — vehicle forced to reduced speed.');
+      if($('thermalBody')) $('thermalBody').textContent='THERMAL CAMERA FAULTED — classification unavailable.';
+    } else if(kind==='lidar'){
+      addTimelineEvent('crit','⚠ LiDAR FAULTED — vehicle slowing; ranging degraded.');
+      reportFaultToControlTower('LiDAR faulted on TRUCK-01 — vehicle forced to reduced speed.');
+      if($('lidarBody')) $('lidarBody').textContent='LiDAR FAULTED — distance measurement unavailable.';
+    } else if(kind==='comm'){
+      addTimelineEvent('crit','⚠ COMMUNICATION LINK FAULTED — loaded vehicle will auto-stop after 10s.');
+      reportFaultToControlTower('COMMUNICATION LINK faulted — local fail-safe armed (10s to auto-stop).');
+      if(state.commFailTimer) clearTimeout(state.commFailTimer);
+      state.commFailureStartedAt=state.simTime;
+      state.commFailTimer=setTimeout(()=>{
+        if(state.failures.comm){
+          state.commFailureStartedAt = Math.min(state.commFailureStartedAt ?? state.simTime, state.simTime-10);
+          // Communication fail-safe: stop the vehicle whose communication link is lost.
+          // Keep every existing maneuver/physics rule unchanged.
+          engageAutoStop('comm');
+          // If the detected object is a pedestrian, communication failure must
+          // stop only the loaded truck. The pedestrian must immediately use the
+          // same lane-change behaviour as the empty truck instead of waiting for
+          // the loaded truck to approach it.
+          if(state.ai.objType==='Person' && !state.personEvent.active){
+            const p=state.personEvent, person=state.other, truck=state.ego;
+            p.active=true;
+            p.timer=0;
+            p.loadedStartPos=truck.pos;
+            p.personStartPos=person.pos;
+            p.reverseStartPos=person.pos;
+            p.reverseDistance=0;
+            p.reverseDir=person.dir||-1;
+            p.turnProgress=0;
+            p.bayPos=null;
+            p.speed=maneuverSpeedProfile(!!state.oppLaneBlocked);
+            if(state.oppLaneBlocked){
+              p.phase='reversing_empty';
+              person.speed=0;
+              person.lane='main';
+              setConflictReadout('COMMS ERROR — PEDESTRIAN REVERSING TO BAY','warn');
+              addTimelineEvent('warn','📡 COMMUNICATION ERROR + LANE BLOCKED — LOADED TRUCK STOPPED; PEDESTRIAN USING EMPTY-TRUCK CLEARANCE MANOEUVRE.');
+            }else{
+              p.phase='moving_left';
+              p.laneOffset=0;
+              person.speed=p.speed;
+              person.lane='left';
+              setConflictReadout('COMMS ERROR — PEDESTRIAN CHANGING LANE','warn');
+              addTimelineEvent('warn','📡 COMMUNICATION ERROR — LOADED TRUCK STOPPED; PEDESTRIAN CHANGING TO SECOND LANE LIKE EMPTY TRUCK.');
+            }
+          }
+          addTimelineEvent('crit','🛑 COMMUNICATION FAIL-SAFE — FAULTED VEHICLE STOPPED AFTER 10 s.');
+          reportFaultToControlTower('Communication lost for 10 s — loaded vehicle stopped by local fail-safe; pedestrian/empty-object manoeuvre remains active.');
+        }
+      },10000);
+    } else {
+      addTimelineEvent('crit','⚠ '+names[kind]+' manually switched OFF — fault/fail-safe state active.');
+      reportFaultToControlTower(names[kind]+' manually disabled by operator.');
+    }
+  } else {
+    if(kind==='comm' && state.commFailTimer){ clearTimeout(state.commFailTimer); state.commFailTimer=null; }
+    if(kind==='comm') state.commFailureStartedAt=null;
+    addTimelineEvent('safe','✓ '+names[kind]+' manually switched ON — normal operation available.');
+    reportFaultToControlTower(names[kind]+' restored by operator.');
+    if(kind==='comm' && state.autoStop.engaged && state.autoStop.reason==='comm') disengageAutoStop();
+    if(kind==='thermal' && $('thermalBody')) $('thermalBody').textContent='Sensor restored.';
+    if(kind==='lidar' && $('lidarBody')) $('lidarBody').textContent='Sensor restored.';
+  }
+}
+
+$('thermalOn').addEventListener('change', e=> setManualSensorState('thermal',e.target.checked));
+$('lidarOn').addEventListener('change', e=> setManualSensorState('lidar',e.target.checked));
+$('gpsOn').addEventListener('change', e=> setManualSensorState('gps',e.target.checked));
+$('commOn').addEventListener('change', e=> setManualSensorState('comm',e.target.checked));
+
+$('aiOn').addEventListener('change', e=> state.ai.on=e.target.checked);
+confSlider.addEventListener('input', e=>{ state.ai.conf=+e.target.value; confVal.textContent=state.ai.conf+'%'; });
+setSegHandler('objTypeSeg','obj', v=>{
+  state.ai.objType=v;
+  // Switching object type clears in-progress person/rock manoeuvres
+  if(v!=='Person' && state.personEvent.active){
+    state.personEvent={active:false,phase:null,laneOffset:0,timer:0,walkProgress:0};
+    setHornReadout('CLEAR','safe');
+  }
+  if(v!=='Rock' && state.rockEvent.active){
+    state.rockEvent={active:false,phase:null,laneOffset:0,timer:0,reported:false,passTravelDir:1,completed:false};
+    if(state.ego.lane==='left') state.ego.lane='main';
+  }
+  if(v==='Rock' || v==='Person'){
+    state.other.speed=0;
+    state.other.mode='stationary';
+    otherSpeed.value=0;
+    otherSpeedVal.textContent='0 km/h';
+    setSeg('otherModeSeg','mode','stationary');
+    // Place hazard ahead of ego so the scenario is immediately usable
+    if(Math.abs(state.other.pos-state.ego.pos) < 30){
+      state.other.pos = state.ego.pos + (state.ego.dir||1)*80;
+    }
+  }
+});
+
+// Dynamic safety-distance panel controls were removed; keep engineering defaults in state.assump.
+$('thSafe').addEventListener('input', e=> state.thresholds.safe=+e.target.value);
+$('thWarn').addEventListener('input', e=> state.thresholds.warn=+e.target.value);
+
+$('resetBtn').addEventListener('click', resetSimulation);
+
+function resetSimulation(){
+  // Restore the complete simulation state without relying on page reload.
+  state.visibility=120; state.fogMode='normal'; state.dust=false; state.rain=false;
+  state.ego={speed:28,dir:1,load:'loaded',pos:0,lane:'main'};
+  state.other={speed:0,dir:-1,mode:'stationary',load:'empty',pos:260,lane:'main'};
+  state.sensors={thermal:true,lidar:true,gps:true,comm:true};
+  state.failures={thermal:false,lidar:false,comm:false};
+  state.ai={on:true,conf:91,objType:'Truck'};
+  state.thresholds={safe:30,warn:65};
+  state.scenario='manual'; state.simTime=0;
+  state.metrics={speedSamples:[],stopTime:0,movingTime:0,productiveDistance:0,reverseDistance:0,energyKwh:0,lastPos:0,warnCount:0,critCount:0,collisionCount:0,lastStatus:'safe',delay:0};
+  state.lastEventStatus=null; state.collisionActive=false; state.collisionFlash=0;
+  state.commFailureStartedAt=null;
+  state.running=false; state.autoStop={engaged:false,reason:null};
+  if(state.commFailTimer){clearTimeout(state.commFailTimer);state.commFailTimer=null;}
+  state.criticalProximity=10; state.oppLaneBlocked=false;
+  state.conflict={active:false,phase:null,emptyRef:null,loadedRef:null,yieldRef:null,passRef:null,laneOffset:0,reverseSpeed:8,loadedResumeSpeed:0,reverseStartPos:0,turnTimer:0,originalDir:1,completedEncounter:false,priorityAssigned:false,priorityRef:null,blockedLaneReported:false,reverseDistance:0,turnProgress:0,reverseDistanceTarget:18,turnBayClearance:30};
+  state.viewRef='ego';
+  stopHorn(); state.hornAudio=null; state.lastFaultReport=null; state.personEvent={active:false,phase:null,laneOffset:0,timer:0,walkProgress:0};
+  state.rockEvent={active:false,phase:null,laneOffset:0,timer:0,reported:false,passTravelDir:1,completed:false};
+
+  // Restore all controls.
+  visSlider.value=120; visVal.textContent='120 m';
+  egoSpeed.value=28; egoSpeedVal.textContent='28 km/h';
+  otherSpeed.value=0; otherSpeedVal.textContent='0 km/h';
+  confSlider.value=91; confVal.textContent='91%';
+  $('dustToggle').checked=false; $('rainToggle').checked=false;
+  $('thermalOn').checked=true; $('lidarOn').checked=true; $('gpsOn').checked=true; $('commOn').checked=true;
+  $('aiOn').checked=true;
+  critThreshSlider.value=10; critThreshVal.textContent='10 m';
+  $('thSafe').value=30; $('thWarn').value=65;
+  setSeg('fogModeSeg','mode','normal'); setSeg('egoDirSeg','dir','1'); setSeg('egoLoadSeg','load','loaded');
+  setSeg('otherDirSeg','dir','-1'); setSeg('otherModeSeg','mode','stationary'); setSeg('otherLoadSeg','load','empty');
+  setSeg('objTypeSeg','obj','Truck');
+  setSeg('viewSeg','view','ego');
+
+  // Restore visible UI and clear history.
+  $('clockPill').textContent='SIM T+0s';
+  startBtn.textContent='▶ Start Simulation'; startBtn.classList.add('primary');
+  pauseOverlay.classList.remove('hidden');
+  $('resumeBtn').style.display='none';
+  $('crFaultReport').textContent='No faults reported'; $('crFaultReport').className='v dim';
+  $('timeline').innerHTML='';
+  setConflictReadout('NONE','safe');
+  setHornReadout('CLEAR','safe');
+  $('crAlertBox').innerHTML='';
+  $('failsafeMode').textContent='NORMAL — CONTROL ROOM LINKED'; $('failsafeMode').className='v safe';
+  lastTs=null;
+  const initialRisk=computeRisk(260);
+  updateUI(260,initialRisk);
+  drawRoad(260,initialRisk); drawThermal(initialRisk); drawLidar(260,initialRisk);
+  addTimelineEvent('safe','Simulation reset to default state.');
+}
+
+
+const startBtn=$('startBtn'), pauseOverlay=$('pauseOverlay');
+startBtn.addEventListener('click', ()=>{
+  state.running = !state.running;
+  if(state.running){
+    startBtn.textContent='⏸ Pause Simulation';
+    startBtn.classList.remove('primary');
+    pauseOverlay.classList.add('hidden');
+    addTimelineEvent('safe','Simulation started.');
+    lastTs=null; // avoid a large dt jump after being paused
+  } else {
+    startBtn.textContent='▶ Start Simulation';
+    startBtn.classList.add('primary');
+    pauseOverlay.classList.remove('hidden');
+    addTimelineEvent('safe','Simulation paused.');
+  }
+});
+
+function setSeg(containerId, attr, value){
+  document.querySelectorAll('#'+containerId+' button').forEach(b=>{
+    b.classList.toggle('on', b.dataset[attr]===String(value));
+  });
+}
+function setSegHandler(containerId, attr, cb){
+  const buttons = document.querySelectorAll('#'+containerId+' button');
+  buttons.forEach(b=>{
+    b.addEventListener('click', ()=>{
+      buttons.forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      cb(b.dataset[attr]);
+    });
+  });
+}
+
+/* Failure simulation with recovery attempt */
+/* Any fault (sensor or comms) is reported to the control tower */
+function reportFaultToControlTower(text){
+  state.lastFaultReport = 'T+'+Math.floor(state.simTime)+'s — '+text;
+  const el=$('crFaultReport');
+  el.textContent = state.lastFaultReport;
+  el.className='v crit';
+}
+
+function engageAutoStop(reason){
+  if(state.autoStop.engaged) return;
+  state.autoStop.engaged = true;
+  state.autoStop.reason = reason;
+  $('resumeBtn').style.display = 'block';
+  if(reason==='risk'){
+    addTimelineEvent('crit','🛑 AUTO EMERGENCY STOP — CRITICAL risk threshold reached. Vehicle decelerating to a stop.');
+  } else if(reason==='comm'){
+    addTimelineEvent('crit','🛑 AUTO STOP — Communication lost for over 10s. Vehicle decelerating to a stop (local fail-safe).');
+  } else if(reason==='person'){
+    addTimelineEvent('crit','🛑 AUTO STOP — Pedestrian detected on haul road. Vehicle decelerating to a stop.');
+  } else if(reason==='rock'){
+    addTimelineEvent('crit','🛑 AUTO STOP — Rock on main lane and opposite lane blocked. Vehicle halted.');
+  }
+}
+function disengageAutoStop(){
+  state.autoStop.engaged = false;
+  state.autoStop.reason = null;
+  $('resumeBtn').style.display = 'none';
+  addTimelineEvent('safe','Manual control resumed by driver.');
+}
+$('resumeBtn').addEventListener('click', disengageAutoStop);
+// Manually adjusting ego speed while auto-stopped hands control back to the driver.
+egoSpeed.addEventListener('input', ()=>{ if(state.autoStop.engaged) disengageAutoStop(); });
+
+/* ============================================================
+   MINE TRAFFIC CONFLICT RESOLUTION (≤ critical proximity threshold)
+   Rule: loaded truck yields & stops -> empty truck tries to pass via
+   opposite lane -> if blocked, empty truck reverses until a clear
+   path is found. Every stage is reported to the control tower.
+============================================================ */
+let hornTimer=null;
+function startHorn(){
+  try{
+    if(state.hornAudio && state.hornAudio.osc){ stopHorn(); }
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    const ac=new AC();
+    const osc=ac.createOscillator(), gain=ac.createGain();
+    osc.type='square'; osc.frequency.value=420; gain.gain.value=0.045;
+    osc.connect(gain); gain.connect(ac.destination); osc.start();
+    state.hornAudio={ctx:ac,osc,gain};
+    clearTimeout(hornTimer);
+    hornTimer=setTimeout(stopHorn,1200);
+  }catch(e){ state.hornAudio=null; }
+}
+function stopHorn(){
+  clearTimeout(hornTimer); hornTimer=null;
+  const h=state.hornAudio; state.hornAudio=null;
+  if(h){ try{h.osc.stop();}catch(e){} try{h.ctx.close();}catch(e){} }
+}
+
+function setConflictReadout(text, cls){
+  const el=$('crConflictState'); el.textContent=text; el.className='v '+cls;
+}
+function setHornReadout(text, cls){
+  const el=$('cHornStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'v '+(cls||'dim');
+}
+function decelVehicleToStop(ref, dt, targetKmh){
+  targetKmh = targetKmh||0;
+  const v = state[ref];
+  const decel = v.load==='loaded' ? state.assump.decelLoaded : state.assump.decelEmpty;
+  const curMs = kmh2ms(v.speed), targetMs = kmh2ms(targetKmh);
+  if(curMs > targetMs){
+    v.speed = Math.max(targetKmh, (curMs - decel*dt)*3.6);
+  }
+  if(ref==='ego'){ egoSpeed.value=v.speed.toFixed(0); egoSpeedVal.textContent=v.speed.toFixed(0)+' km/h'; }
+  else { otherSpeed.value=v.speed.toFixed(0); otherSpeedVal.textContent=v.speed.toFixed(0)+' km/h'; }
+}
+function maneuverSpeedProfile(blockedLane=false){
+  // Exact project operating rules supplied by the user.
+  const sensorFault = state.failures.thermal || state.failures.lidar || state.failures.gps ||
+                      !state.sensors.thermal || !state.sensors.lidar || !state.sensors.gps;
+  const adverse = state.rain || state.dust;
+
+  if(sensorFault){
+    // Clear second lane: conditions 7, 15, 16.
+    if(!blockedLane) return 15;
+    // Blocked second lane: conditions 17, 18, 19.
+    if(state.fogMode==='light') return 15;
+    if(state.fogMode==='dense') return 20;
+    return 20;
+  }
+  if(state.fogMode==='dense') return 10;
+  if(state.fogMode==='light') return adverse ? 15 : 20;
+  return adverse ? 15 : 25;
+}
+
+function operatingSpeed(){
+  const sensorFault = state.failures.thermal || state.failures.lidar || state.failures.gps ||
+                      !state.sensors.thermal || !state.sensors.lidar || !state.sensors.gps;
+  const adverse = state.rain || state.dust;
+  if(sensorFault) return 15;
+  if(state.fogMode==='dense') return 10;
+  if(state.fogMode==='light') return adverse ? 15 : 20;
+  return adverse ? 15 : 25;
+}
+
+function setVehicleSpeed(ref, kmh){
+  const v=state[ref]; if(!v) return;
+  v.speed=Math.max(0,kmh);
+  if(ref==='ego'){ egoSpeed.value=Math.round(v.speed); egoSpeedVal.textContent=Math.round(v.speed)+' km/h'; }
+  else { otherSpeed.value=Math.round(v.speed); otherSpeedVal.textContent=Math.round(v.speed)+' km/h'; }
+}
+
+function beginTruckConflict(commMode=false){
+  const c=state.conflict;
+  const ego=state.ego, other=state.other;
+  if(ego.load===other.load) return false;
+  const egoEmpty=ego.load==='empty';
+  c.emptyRef=egoEmpty?'ego':'other';
+  c.loadedRef=egoEmpty?'other':'ego';
+  c.yieldRef=c.loadedRef; c.passRef=c.emptyRef;
+  c.originalDir=state[c.emptyRef].dir||1; c.passTravelDir=c.originalDir;
+  c.commMode=!!commMode; c.faultRef=commMode?'ego':null;
+  c.healthyRef=commMode?'other':c.emptyRef;
+  if(commMode){ c.yieldRef=c.faultRef; c.passRef=c.healthyRef; }
+  c.active=true; c.phase='checking'; c.laneOffset=0;
+  c.reverseDistance=0; c.reverseStartPos=state[c.passRef].pos;
+  c.reverseDir=Math.sign(state[c.passRef].pos-state[c.yieldRef].pos)||1;
+  c.turnProgress=0; c.bayEmptyPos=null; c.loadedPassStart=null; c.loadedHasPassed=false;
+  c.completedEncounter=false; c.blockedLane=false; c.blockedLaneReported=false;
+  setConflictReadout(commMode?'COMM FAIL — HEALTHY VEHICLE CHECKING OPPOSITE LANE':'CHECKING SECOND LANE','safe');
+  if(commMode) addTimelineEvent('crit','📡 COMMUNICATION FAILURE ≥10 s — FAULTED VEHICLE STOPPED; HEALTHY VEHICLE HAS MOVEMENT PRIORITY.');
+  else addTimelineEvent('safe','🚛 EMPTY TRUCK APPROACHING LOADED TRUCK — checking second lane clearance.');
+  return true;
+}
+
+function checkTrafficConflict(distance, dt){
+  const c=state.conflict, gap=Math.abs(state.other.pos-state.ego.pos);
+  const commDown=state.failures.comm || !state.sensors.comm;
+  // Communication-fault protocol starts only after the 10 s fail-safe: the
+  // loaded TRUCK-01 is the faulted vehicle and must remain stopped, while the
+  // healthy empty truck gets the right-of-way to use the opposite lane.
+  const commReady=commDown && state.commFailureStartedAt!=null &&
+                  (state.simTime-state.commFailureStartedAt)>=10 &&
+                  state.autoStop.engaged && state.autoStop.reason==='comm';
+
+  if(!c.active && c.completedEncounter){
+    if(gap>120 && state.ego.lane==='main' && state.other.lane==='main'){ c.completedEncounter=false; c.phase=null; }
+    return;
+  }
+  if(!c.active){
+    const mixed=state.ego.load!==state.other.load;
+    // With communication lost, the loaded TRUCK-01 must stop first and the
+    // healthy empty truck must then get a chance to perform the opposite-lane
+    // manoeuvre even if the trucks are still farther than the normal 90 m
+    // traffic-conflict trigger.
+    const commValid = state.running && commReady &&
+      state.ego.load==='loaded' && state.other.load==='empty' &&
+      gap<=180 && gap>8 && state.ego.lane==='main' && state.other.lane==='main';
+    const valid=state.running && mixed && gap<=90 && gap>8 &&
+      state.ego.lane==='main' && state.other.lane==='main';
+    if(commValid || valid) beginTruckConflict(commValid ? true : commReady);
+    return;
+  }
+
+  const pass=state[c.passRef], fault=state[c.yieldRef];
+  if(!pass || !fault) return;
+
+  // Communication fault: ONLY the faulted vehicle stops. The healthy vehicle
+  // checks the opposite lane. If blocked, both remain stopped.
+  if(c.commMode){
+    // Faulted vehicle = loaded truck. It stays stopped for the whole
+    // communication-fault manoeuvre; only the healthy empty truck moves.
+    fault.speed=0; fault.lane='main';
+    if(c.phase==='checking'){
+      if(state.oppLaneBlocked){
+        pass.speed=0; pass.lane='main'; c.laneOffset=0; c.phase='comm_blocked_stop';
+        addTimelineEvent('crit','🛑 COMMUNICATION FAULT + OPPOSITE LANE BLOCKED — BOTH VEHICLES STOPPED.');
+        reportFaultToControlTower('Faulted vehicle stopped. Opposite lane blocked, so healthy vehicle cannot pass safely.');
+        setConflictReadout('COMMS FAIL + LANE BLOCKED — BOTH STOPPED','crit');
+      }else{
+        const sp=maneuverSpeedProfile(false); setVehicleSpeed(c.passRef,sp); c.laneOffset=0; c.phase='moving_left';
+        addTimelineEvent('warn','✓ OPPOSITE LANE CLEAR — HEALTHY VEHICLE STARTING CONTROLLED PASS.');
+        setConflictReadout('COMMS FAIL — HEALTHY VEHICLE MOVING','warn');
+      }
+      return;
+    }
+    if(c.phase==='comm_blocked_stop'){
+      // Both vehicles remain stopped because the opposite lane is blocked.
+      // This is a controlled safe state, not an emergency/collision state.
+      pass.speed=0; fault.speed=0; pass.lane='main'; fault.lane='main';
+      setConflictReadout('SAFE OPERATION — COMMS ERROR + LANE BLOCKED','safe');
+      return;
+    }
+    if(c.phase==='moving_left'){
+      pass.speed=maneuverSpeedProfile(false); fault.speed=0; c.laneOffset=Math.min(1,c.laneOffset+dt*1.15); pass.lane='left';
+      if(c.laneOffset>=1){c.laneOffset=1;c.phase='overtaking';}
+      return;
+    }
+    if(c.phase==='overtaking'){
+      pass.speed=maneuverSpeedProfile(false); fault.speed=0; pass.lane='left'; c.laneOffset=1;
+      if((pass.pos-fault.pos)*c.passTravelDir>=12){ c.phase='holding_left'; addTimelineEvent('safe','✓ HEALTHY VEHICLE PASSED FAULTED VEHICLE — holding opposite lane.'); }
+      return;
+    }
+    if(c.phase==='holding_left'){
+      pass.speed=maneuverSpeedProfile(false); fault.speed=0; pass.lane='left'; c.laneOffset=1;
+      if((pass.pos-fault.pos)*c.passTravelDir>=50){c.phase='returning_lane';addTimelineEvent('safe','✓ HEALTHY VEHICLE 50 m PAST FAULTED VEHICLE — RETURNING TO MAIN LANE.');}
+      return;
+    }
+    if(c.phase==='returning_lane'){
+      pass.speed=maneuverSpeedProfile(false); fault.speed=0; pass.lane='left'; c.laneOffset=Math.max(0,c.laneOffset-dt*1.15);
+      if(c.laneOffset<=0.02){
+        c.laneOffset=0;
+        pass.lane='main';
+        fault.speed=0;
+        c.active=false; c.phase='completed'; c.completedEncounter=true;
+        setConflictReadout('EMPTY TRUCK RETURNED — LOADED TRUCK STOPPED','warn');
+        addTimelineEvent('safe','✓ EMPTY TRUCK RETURNED TO MAIN LANE — LOADED TRUCK REMAINS STOPPED DUE TO COMMUNICATION FAULT.');
+        reportFaultToControlTower('Communication fault protocol complete: empty truck returned to main lane; loaded faulted truck remains stopped.');
+      }
+      return;
+    }
+    return;
+  }
+
+  const empty=state[c.emptyRef], loaded=state[c.loadedRef];
+  if(!empty || !loaded) return;
+  if(c.phase==='checking'){
+    if(state.oppLaneBlocked){
+      c.phase='reversing_empty'; c.reverseStartPos=empty.pos; c.reverseDistance=0; c.reverseDir=Math.sign(empty.pos-loaded.pos)||1; empty.lane='main'; empty.reverseSpeed=0;
+      addTimelineEvent('warn','↩ SECOND LANE BLOCKED — EMPTY TRUCK REVERSING INTO CLEARANCE BAY.');
+      setConflictReadout('SECOND LANE BLOCKED — REVERSING TO BAY','warn');
+    }else{
+      const sp=maneuverSpeedProfile(false); c.phase='moving_left'; c.laneOffset=0; empty.lane='main'; setVehicleSpeed(c.emptyRef,sp); setVehicleSpeed(c.loadedRef,sp);
+      addTimelineEvent('safe','✓ OPPOSITE LANE CLEAR — EMPTY TRUCK STARTING CONTROLLED LANE CHANGE.'); setConflictReadout('EMPTY TRUCK MOVING TO SECOND LANE','warn');
+    } return;
+  }
+  if(c.phase==='moving_left'){const sp=maneuverSpeedProfile(false);empty.speed=sp;loaded.speed=sp;empty.lane='left';c.laneOffset=Math.min(1,c.laneOffset+dt*1.15);if(c.laneOffset>=1){c.laneOffset=1;c.phase='overtaking';}return;}
+  if(c.phase==='overtaking'){const sp=maneuverSpeedProfile(false);empty.speed=sp;loaded.speed=sp;empty.lane='left';c.laneOffset=1;if((empty.pos-loaded.pos)*c.passTravelDir>=12){c.loadedPassStart=loaded.pos;c.phase='holding_left';}return;}
+  if(c.phase==='holding_left'){const sp=maneuverSpeedProfile(false);empty.speed=sp;loaded.speed=sp;empty.lane='left';c.laneOffset=1;const travel=Math.max(0,(loaded.pos-c.loadedPassStart)*(loaded.dir||1));if(travel>=50){c.phase='returning_lane';addTimelineEvent('safe','✓ LOADED TRUCK TRAVELLED 50 m — EMPTY TRUCK RETURNING TO MAIN LANE.');}return;}
+  if(c.phase==='returning_lane'){const sp=maneuverSpeedProfile(false);empty.speed=sp;loaded.speed=sp;empty.lane='left';c.laneOffset=Math.max(0,c.laneOffset-dt*1.15);if(c.laneOffset<=0.02){c.laneOffset=0;empty.lane='main';empty.dir=c.passTravelDir||c.originalDir||empty.dir;c.active=false;c.phase='completed';c.completedEncounter=true;setConflictReadout('MAIN ROAD RESTORED','safe');}return;}
+  if(c.phase==='reversing_empty'){loaded.speed=0;empty.lane='main';empty.reverseSpeed=Math.min(8,(empty.reverseSpeed||0)+3*dt);empty.pos+=kmh2ms(empty.reverseSpeed)*c.reverseDir*dt;c.reverseDistance=Math.abs(empty.pos-c.reverseStartPos);if(c.reverseDistance>=18){empty.reverseSpeed=0;empty.speed=0;c.turnProgress=0;c.phase='turning_clearance';}return;}
+  if(c.phase==='turning_clearance'){empty.speed=0;loaded.speed=0;c.turnProgress=Math.min(1,c.turnProgress+dt*.8);c.laneOffset=c.turnProgress;if(c.turnProgress>=1){empty.lane='turn';c.bayEmptyPos=empty.pos;c.loadedHasPassed=false;c.phase='turn_bay_wait';setVehicleSpeed(c.loadedRef,maneuverSpeedProfile(true));}return;}
+  if(c.phase==='turn_bay_wait'){empty.speed=0;empty.reverseSpeed=0;empty.lane='turn';const sp=maneuverSpeedProfile(true);loaded.speed=sp;const travel=(loaded.pos-c.bayEmptyPos)*(loaded.dir||1);if(travel>=50){c.loadedHasPassed=true;c.phase='merge_main_after_turn';addTimelineEvent('safe','✓ LOADED TRUCK PASSED 50 m — EMPTY TRUCK EXITING BAY.');}return;}
+  if(c.phase==='merge_main_after_turn'){const sp=maneuverSpeedProfile(true);empty.speed=sp;loaded.speed=sp;empty.lane='turn';c.laneOffset=Math.max(0,c.laneOffset-dt*.85);if(c.laneOffset<=.02){c.laneOffset=0;empty.lane='main';empty.dir=c.originalDir||empty.dir;c.active=false;c.phase='completed';c.completedEncounter=true;setConflictReadout('MAIN ROAD RESTORED','safe');}return;}
+}
+function checkPersonHazard(distance, dt){
+  const p=state.personEvent, person=state.other, truck=state.ego;
+  const thermalOk=!state.failures.thermal && state.sensors.thermal;
+  const lidarOk=!state.failures.lidar && state.sensors.lidar;
+  const canDetect=state.ai.on && (thermalOk || lidarOk);
+  // Pedestrian is the EMPTY-TRUCK physical model. The only added behavior is horn.
+  if(!p.active){
+    if(state.running && canDetect && state.ai.objType==='Person' && distance<=30 && !state.collisionActive){
+      p.active=true;p.phase='checking';p.timer=0;p.laneOffset=0;p.loadedStartPos=truck.pos;p.personStartPos=person.pos;p.reverseStartPos=person.pos;p.reverseDistance=0;p.reverseDir=person.dir||-1;p.turnProgress=0;p.bayPos=null;p.speed=maneuverSpeedProfile(false);
+      startHorn();setHornReadout('🔊 HORN — PEDESTRIAN DETECTED AT '+distance.toFixed(0)+' m','crit');addTimelineEvent('crit','🔊 TRUCK DETECTED PEDESTRIAN AT '+distance.toFixed(0)+' m — HORN ON.');
+    }return;
+  }
+  const sp=p.speed||maneuverSpeedProfile(false);
+  const commFailActive = state.failures.comm && state.autoStop.engaged && state.autoStop.reason==='comm';
+  if(p.phase==='checking'){
+    p.timer+=dt;
+    if(commFailActive){
+      // Communication fault stops only the loaded truck. The pedestrian keeps
+      // the same physical behaviour as the empty truck and starts its lane
+      // manoeuvre instead of being held by the communication fail-safe.
+      truck.speed=0;
+      if(state.oppLaneBlocked){
+        p.phase='reversing_empty';
+        p.reverseStartPos=person.pos; p.reverseDistance=0;
+        p.reverseDir=person.dir||-1; p.turnProgress=0;
+      }else{
+        person.speed=sp; person.lane='main';
+        p.phase='moving_left'; p.laneOffset=0;
+      }
+      if(p.timer>=1.0) stopHorn();
+      return;
+    }
+    if(p.timer>=1.0)stopHorn();
+    if(state.oppLaneBlocked){p.phase='reversing_empty';p.reverseStartPos=person.pos;p.reverseDistance=0;p.reverseDir=person.dir||-1;p.turnProgress=0;}else{p.phase='moving_left';p.laneOffset=0;}return;
+  }
+  if(p.phase==='moving_left'){person.speed=sp;person.lane='left';p.laneOffset=Math.min(1,p.laneOffset+dt*1.15);if(p.laneOffset>=1){p.laneOffset=1;p.phase='holding_left';}return;}
+  if(p.phase==='holding_left'){person.speed=sp;person.lane='left';p.laneOffset=1;const truckTravel=Math.max(0,(truck.pos-p.loadedStartPos)*(truck.dir||1));if(truckTravel>=50)p.phase='returning_lane';return;}
+  if(p.phase==='returning_lane'){person.speed=sp;person.lane='left';p.laneOffset=Math.max(0,p.laneOffset-dt*1.15);if(p.laneOffset<=.02){p.laneOffset=0;person.lane='main';p.active=false;p.phase='cleared';stopHorn();setHornReadout('CLEAR — PEDESTRIAN SAFE','safe');setConflictReadout('PEDESTRIAN CLEAR','safe');}return;}
+  if(p.phase==='reversing_empty'){person.speed=0;person.lane='main';const rv=Math.min(8,sp);person.reverseSpeed=rv;person.pos+=kmh2ms(rv)*p.reverseDir*dt;p.reverseDistance=Math.abs(person.pos-p.reverseStartPos);if(p.reverseDistance>=18){person.reverseSpeed=0;p.turnProgress=0;p.phase='turning_clearance';}return;}
+  if(p.phase==='turning_clearance'){person.speed=0;p.turnProgress=Math.min(1,p.turnProgress+dt*.8);p.laneOffset=p.turnProgress;if(p.turnProgress>=1){p.laneOffset=1;person.lane='turn';p.bayPos=person.pos;p.phase='turn_bay_wait';}return;}
+  if(p.phase==='turn_bay_wait'){person.speed=0;person.lane='turn';p.laneOffset=1;const truckTravel=Math.max(0,(truck.pos-p.loadedStartPos)*(truck.dir||1));if(truckTravel>=50)p.phase='merge_main_after_turn';return;}
+  if(p.phase==='merge_main_after_turn'){person.speed=sp;person.lane='turn';p.laneOffset=Math.max(0,p.laneOffset-dt*.85);if(p.laneOffset<=.02){p.laneOffset=0;person.lane='main';p.active=false;p.phase='cleared';stopHorn();setHornReadout('CLEAR — PEDESTRIAN SAFE','safe');setConflictReadout('PEDESTRIAN CLEAR','safe');}return;}
+}
+// Rock controller: fixed rock on main lane. Truck uses the second lane only
+// after checking it is clear, travels 30 m beyond the rock, then merges once.
+function checkRockHazard(distance, dt){
+  const r=state.rockEvent;
+  if(!state.ai.on || state.ai.objType!=='Rock' || !state.running) return;
+  if(r.completed && !r.active){
+    if(distance>70) r.completed=false;
+    return;
+  }
+  if(!r.active){
+    if(distance<=45 && distance>8 && state.ego.lane==='main'){
+      r.active=true; r.phase='checking'; r.laneOffset=0; r.rockPassStartPos=null;
+      addTimelineEvent('warn','🪨 ROCK DETECTED — checking opposite lane clearance.');
+      setConflictReadout('ROCK — CHECKING SECOND LANE','warn');
+    }
+    return;
+  }
+  if(r.phase==='checking'){
+    if(state.oppLaneBlocked){
+      r.phase='blocked_stop'; state.ego.speed=0; engageAutoStop('rock');
+      addTimelineEvent('crit','🛑 ROCK ON MAIN LANE + SECOND LANE BLOCKED — VEHICLE STOPPED.');
+      reportFaultToControlTower('Rock blocks main lane and opposite lane is blocked — truck stopped.');
+      return;
+    }
+    r.phase='moving_left'; r.laneOffset=0; state.autoStop.engaged=false; state.autoStop.reason=null;
+    const sp=operatingSpeed(); setVehicleSpeed('ego',sp);
+    addTimelineEvent('safe','✓ SECOND LANE CLEAR — LOADED TRUCK BYPASSING ROCK VIA SECOND LANE.');
+    setConflictReadout('ROCK — MOVING TO SECOND LANE','warn');
+    return;
+  }
+  if(r.phase==='moving_left'){
+    state.ego.speed=operatingSpeed(); r.laneOffset=Math.min(1,r.laneOffset+dt*1.0);
+    if(r.laneOffset>=1){r.laneOffset=1;r.phase='overtaking';r.rockPassStartPos=state.ego.pos;addTimelineEvent('safe','✓ TRUCK FULLY IN SECOND LANE — PASSING ROCK.');}
+    return;
+  }
+  if(r.phase==='overtaking'){
+    state.ego.speed=operatingSpeed(); r.laneOffset=1;
+    const travel=Math.max(0,(state.ego.pos-r.rockPassStartPos)*(state.ego.dir||1));
+    if(travel>=50){r.phase='returning';addTimelineEvent('safe','✓ TRUCK IS 50 m BEYOND ROCK — RETURNING SMOOTHLY TO MAIN LANE.');setConflictReadout('ROCK CLEARED — RETURNING TO MAIN LANE','safe');}
+    return;
+  }
+  if(r.phase==='returning'){
+    state.ego.speed=operatingSpeed(); r.laneOffset=Math.max(0,r.laneOffset-dt*1.0);
+    if(r.laneOffset<=0.02){
+      r.laneOffset=0; state.ego.lane='main'; r.active=false; r.phase='completed'; r.completed=true;
+      addTimelineEvent('safe','✓ ROCK MANEUVER COMPLETE — TRUCK STABLE IN MAIN LANE.');
+      setConflictReadout('ROCK CLEARED — MAIN ROAD RESTORED','safe');
+    }
+  }
+}
+
+function kmh2ms(v){ return v/3.6; }
+function ms2kmh(v){ return v*3.6; }
+
+/** Effective friction on haul surface under current weather. */
+function surfaceFriction(){
+  const a = state.assump;
+  let mu = a.muDry;
+  if(state.dust) mu = Math.min(mu, a.muDust);
+  if(state.rain) mu = Math.min(mu, a.muWet);
+  // Dense fog often co-occurs with moisture / reduced grip awareness
+  if(state.fogMode==='dense') mu *= 0.92;
+  return Math.max(0.22, mu);
+}
+
+/** Achievable deceleration (m/s²) from tyre–road friction + grade. */
+function achievableDecel(){
+  const a = state.assump;
+  const mu = surfaceFriction();
+  const g = 9.81;
+  const grade = (a.gradePct||0)/100; // +ve uphill increases stopping distance when descending toward object
+  // Conservative: treat approach as mild downhill component of grade
+  const base = mu * g;
+  const gradeEffect = g * grade * 0.35; // partial grade penalty
+  let decel = Math.max(1.0, base - gradeEffect);
+  // Cap by drivetrain / brake design assumptions for loaded vs empty
+  const designCap = state.ego.load==='loaded' ? a.decelLoaded : a.decelEmpty;
+  return Math.min(decel, designCap);
+}
+
+/**
+ * Visibility-adaptive maximum operating speed (mine SOP).
+ * Keeps stopping distance inside a fraction of available sight distance.
+ */
+function recommendedMaxSpeedKmh(){
+  const sp = state.speedPolicy;
+  let cap = sp.clear;
+  if(state.fogMode==='dense' || state.visibility < 25) cap = Math.min(cap, sp.denseFog);
+  else if(state.fogMode==='light' || state.visibility < 80) cap = Math.min(cap, sp.lightFog);
+
+  // Sensor degradation forces lower policy speed
+  const thermalOk = state.sensors.thermal && !state.failures.thermal;
+  const lidarOk = state.sensors.lidar && !state.failures.lidar;
+  if(!thermalOk || !lidarOk) cap = Math.min(cap, sp.sensorDegraded);
+
+  // Physics: speed such that stopping distance ≈ 0.7 × visibility (margin)
+  const a = state.assump;
+  const decel = achievableDecel();
+  const vis = Math.max(8, state.visibility);
+  const targetStop = vis * 0.70;
+  // Solve v*t_r + v²/(2a) = targetStop  → quadratic in v
+  const tr = a.reaction;
+  // v²/(2a) + tr*v - targetStop = 0
+  const A = 1/(2*Math.max(decel,0.5));
+  const B = tr;
+  const C = -targetStop;
+  const disc = B*B - 4*A*C;
+  if(disc > 0 && A > 0){
+    const vMs = (-B + Math.sqrt(disc)) / (2*A);
+    if(vMs > 0) cap = Math.min(cap, ms2kmh(vMs));
+  }
+  return Math.max(8, Math.min(60, Math.round(cap)));
+}
+
+function computeSafeDistance(){
+  const a = state.assump;
+  const decel = achievableDecel();
+  const v = kmh2ms(state.ego.speed);
+  const reactionDist = v * a.reaction;
+  const brakingDist = (v*v) / (2*Math.max(decel,0.1));
+  const stoppingDist = reactionDist + brakingDist;
+  let safeDist = stoppingDist + a.buffer;
+
+  // Fog / low-visibility inflation: when sight distance is less than stopping
+  // demand, enlarge the required gap so the operator is warned earlier.
+  if(state.visibility < stoppingDist){
+    const fogScale = state.fogMode==='dense' ? a.fogFactor*1.15 : a.fogFactor;
+    safeDist = Math.max(safeDist, stoppingDist * fogScale);
+  }
+  // Dust/rain adds a small extra buffer for reduced contrast and longer reaction
+  if(state.dust) safeDist += 3;
+  if(state.rain) safeDist += 4;
+
+  return {
+    reactionDist, brakingDist, stoppingDist, safeDist,
+    decel, mu: surfaceFriction(),
+    recMaxSpeed: recommendedMaxSpeedKmh()
+  };
+}
+
+/** Sensor health 0–100 for control-room dashboard. */
+function sensorHealthScore(){
+  let h = 100;
+  if(state.failures.thermal || !state.sensors.thermal) h -= 30;
+  if(state.failures.lidar || !state.sensors.lidar) h -= 35;
+  if(!state.sensors.gps) h -= 15;
+  if(state.failures.comm || !state.sensors.comm) h -= 12;
+  if(state.ai.on && state.ai.conf < 60) h -= 8;
+  if(!state.ai.on) h -= 10;
+  return Math.max(0, h);
+}
+
+function computeRisk(distance){
+  const model = computeSafeDistance();
+  const closingKmh = (state.ego.dir===1 && state.other.dir===-1) ? (state.ego.speed + state.other.speed) :
+                      (state.ego.speed - state.other.speed);
+  const relSpeed = Math.max(0, closingKmh);
+  const relSpeedMs = kmh2ms(relSpeed);
+
+  // deficit ratio: how much distance falls short of required safe distance
+  const deficit = (model.safeDist - distance) / Math.max(model.safeDist, 1);
+  let score = 0;
+  score += Math.max(0, deficit) * 62;
+
+  // relative speed contribution
+  score += Math.min(20, relSpeedMs * 1.8);
+
+  // visibility contribution (poor visibility raises baseline uncertainty)
+  const visFactor = Math.max(0, (100 - state.visibility)) / 100;
+  score += visFactor * 12;
+
+  // Speeding above visibility-adaptive policy
+  const overSpeed = state.ego.speed - model.recMaxSpeed;
+  if(overSpeed > 0) score += Math.min(12, overSpeed * 0.55);
+
+  // object classification & AI confidence
+  let objRisk = 0;
+  if(state.ai.on){
+    if(state.ai.objType==='Person') objRisk = 14;
+    else if(state.ai.objType==='Rock') objRisk = 13;
+    else if(state.ai.objType==='Truck') objRisk = 8;
+    else if(state.ai.objType==='Unknown') objRisk = 12;
+    else objRisk = 3;
+    if(state.ai.conf < 60){ objRisk += 10; }
+  } else {
+    objRisk = 12;
+  }
+  score += objRisk;
+
+  // sensor degradation / failure → fail-safe conservatism
+  let uncertain=false;
+  if(state.failures.thermal || !state.sensors.thermal){ score += 10; uncertain=true; }
+  if(state.failures.lidar || !state.sensors.lidar){ score += 14; uncertain=true; }
+  if(!state.sensors.gps){ score += 4; }
+  if(state.failures.comm || !state.sensors.comm){ score += 3; }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  let status='safe';
+  if(score > state.thresholds.warn) status='crit';
+  else if(score > state.thresholds.safe) status='warn';
+
+  return { score, status, model, relSpeed, uncertain, sensorHealth: sensorHealthScore() };
+}
+
+/**
+ * Soft speed advisory: when visibility or sensors force a lower policy speed,
+ * gently decelerate toward the recommended maximum (does not override auto-stop
+ * or active traffic-conflict control).
+ */
+function applyVisibilitySpeedPolicy(dt){
+  if(!state.running || state.autoStop.engaged) return;
+  // Active traffic/rock/person controllers own their speed. Do not let a second
+  // controller fight them and create oscillation.
+  if(state.conflict.active || state.rockEvent.active || state.personEvent.active) return;
+  const rec=operatingSpeed();
+  if(state.ego.speed>rec+0.5){
+    const decel=achievableDecel()*0.45;
+    state.ego.speed=Math.max(rec,(kmh2ms(state.ego.speed)-decel*dt)*3.6);
+    egoSpeed.value=state.ego.speed.toFixed(0); egoSpeedVal.textContent=state.ego.speed.toFixed(0)+' km/h';
+  }
+  const key=state.fogMode+'|'+rec+'|'+(state.failures.lidar||!state.sensors.lidar?'L':'')+(state.failures.thermal||!state.sensors.thermal?'T':'');
+  if(state.lastAdvisoryKey!==key && (state.fogMode!=='normal'||rec<28)){ state.lastAdvisoryKey=key; addTimelineEvent('warn','📡 MineGuard speed policy: max '+rec+' km/h for current visibility/sensors.'); }
+}
+
+/* ============================================================
+   SIMULATION LOOP
+============================================================ */
+let lastTs=null;
+function tick(ts){
+  if(lastTs===null) lastTs=ts;
+  let dt = (ts-lastTs)/1000; if(dt>0.2) dt=0.2;
+  lastTs=ts;
+
+  if(state.running){
+    state.simTime += dt;
+    $('clockPill').textContent = 'SIM T+' + Math.floor(state.simTime)+'s';
+
+    // Auto-stop deceleration: bring ego speed to 0 using the same braking
+    // assumption used in the safety-distance model. Suspended while the
+    // traffic-conflict state machine or an active rock bypass is managing motion.
+    const rockBypassActive = state.rockEvent.active && state.rockEvent.phase !== 'blocked_stop';
+    if(state.autoStop.engaged && !state.conflict.active && !rockBypassActive && state.ego.speed > 0){
+      const decel = state.ego.load==='loaded' ? state.assump.decelLoaded : state.assump.decelEmpty;
+      let speedMs = Math.max(0, kmh2ms(state.ego.speed) - decel*dt);
+      state.ego.speed = speedMs*3.6;
+      egoSpeed.value = state.ego.speed.toFixed(0);
+      egoSpeedVal.textContent = state.ego.speed.toFixed(0)+' km/h';
+    }
+
+    // Thermal / LiDAR fault → force a conservative slow-down (not a hard stop).
+    // Communication fault uses the existing 10 s timer + full auto-stop instead.
+    // Suspended during rock bypass so the lane-change is not starved of speed.
+    if(!state.autoStop.engaged && !state.conflict.active && !rockBypassActive){
+      const thermalFault = state.failures.thermal || !state.sensors.thermal;
+      const lidarFault = state.failures.lidar || !state.sensors.lidar;
+      if(thermalFault || lidarFault){
+        const targetKmh = lidarFault ? 12 : 15; // LiDAR loss is more restrictive
+        if(state.ego.speed > targetKmh){
+          const decel = achievableDecel();
+          let speedMs = Math.max(kmh2ms(targetKmh), kmh2ms(state.ego.speed) - decel*0.6*dt);
+          state.ego.speed = speedMs*3.6;
+          egoSpeed.value = state.ego.speed.toFixed(0);
+          egoSpeedVal.textContent = state.ego.speed.toFixed(0)+' km/h';
+        }
+      }
+    }
+
+    // Visibility-adaptive speed policy for fog / low-visibility haul roads
+    applyVisibilitySpeedPolicy(dt);
+
+    // Move vehicles. The conflict state machine owns the EMPTY truck's
+    // position during its reverse manoeuvre to prevent double movement.
+    const conflictControlledPhases = ['reversing_empty','turning_clearance','turn_bay_wait','merge_main_after_turn'];
+    const conflictOwnsEgo = state.conflict.active &&
+      conflictControlledPhases.includes(state.conflict.phase) && state.conflict.passRef==='ego';
+    const conflictOwnsOther = state.conflict.active &&
+      conflictControlledPhases.includes(state.conflict.phase) && state.conflict.passRef==='other';
+    const personOwnsOther = state.ai.objType==='Person' && state.personEvent.active &&
+      ['reversing_empty','turning_clearance','turn_bay_wait','merge_main_after_turn'].includes(state.personEvent.phase);
+
+    if(!conflictOwnsEgo){
+      state.ego.pos += kmh2ms(state.ego.speed) * state.ego.dir * dt;
+    }
+    if(!conflictOwnsOther && !personOwnsOther){
+      state.other.pos += kmh2ms(state.other.speed) * state.other.dir * dt;
+    }
+  }
+
+  let distance = Math.abs(state.other.pos - state.ego.pos);
+  if(distance > 400) distance = 400;
+
+  // Hazard / traffic resolution (rock never changes lane; pedestrian and empty truck may)
+  if(state.running){
+    if(state.ai.objType==='Person'){
+      checkPersonHazard(distance, dt);
+    } else if(state.ai.objType==='Rock'){
+      checkRockHazard(distance, dt);
+    } else {
+      checkTrafficConflict(distance, dt);
+    }
+  }
+  distance = Math.abs(state.other.pos - state.ego.pos);
+  if(distance > 400) distance = 400;
+
+  // Real collision handling: only trigger once per approach, then separate
+  // vehicles to a recovery gap so the scene doesn't sit fused at 0 m.
+  // Suspended while the conflict resolution system is actively managing
+  // the approach — that proximity is intentional, not an accident.
+  const COLLISION_THRESHOLD = 1.2; // metres — physical contact
+  const RECOVERY_GAP = 22; // metres — where vehicles are placed after a collision event
+  if(state.running && !state.conflict.active && !(state.rockEvent.active && state.rockEvent.phase!=='blocked_stop') && state.ego.lane===state.other.lane && distance <= COLLISION_THRESHOLD){
+    if(!state.collisionActive){
+      state.collisionActive = true;
+      state.collisionFlash = 26; // frames of flash effect
+      state.metrics.collisionCount++;
+      state.metrics.delay += 15;
+      addTimelineEvent('crit','💥 COLLISION — vehicles in contact. Simulated impact logged.');
+    }
+    state.other.pos = state.ego.pos + RECOVERY_GAP;
+    distance = RECOVERY_GAP;
+  } else if(distance > COLLISION_THRESHOLD + 4){
+    state.collisionActive = false; // re-armed once vehicles have separated a bit
+  }
+  if(state.collisionFlash > 0) state.collisionFlash--;
+
+  const risk = computeRisk(distance);
+  // Do not let the generic risk engine interrupt an active two-truck
+  // traffic manoeuvre, or stop the loaded truck before the manoeuvre starts.
+  const trafficCandidate = state.running && !state.conflict.active &&
+    distance <= 85 && distance > 12 &&
+    state.ego.lane==='main' && state.other.lane==='main' &&
+    state.ego.load !== state.other.load &&
+    state.ai.objType==='Truck';
+  // Generic risk auto-stop is only for truck-vs-truck. Person and Rock have
+  // their own hazard controllers (horn / lane-bypass / blocked stop).
+  const hazardOwnsStop = state.ai.objType==='Person' || state.ai.objType==='Rock' ||
+    state.personEvent.active || state.rockEvent.active;
+  if(state.running && risk.status==='crit' && !state.autoStop.engaged && !state.conflict.active && !trafficCandidate && !hazardOwnsStop){
+    engageAutoStop('risk');
+  }
+  updateUI(distance, risk);
+  drawRoad(distance, risk);
+  drawThermal(risk);
+  drawLidar(distance, risk);
+  if(state.running) updateMetrics(dt, risk);
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ============================================================
+   UI UPDATE
+============================================================ */
+function statusColor(s){ return s==='safe'?'safe':s==='warn'?'warn':'crit'; }
+
+function updateUI(distance, risk){
+  const cls = statusColor(risk.status);
+
+  // top banner
+  const banner=$('statusBanner');
+  const txt = risk.status==='safe' ? '🟢 SAFE — NORMAL OPERATION' :
+              risk.status==='warn' ? '🟡 WARNING — REDUCE SPEED' :
+              '🔴 CRITICAL — STOP / TAKE EMERGENCY ACTION';
+  if(state.collisionFlash > 0){
+    banner.className='status-banner crit';
+    $('statusText').textContent = '💥 COLLISION — VEHICLES IN CONTACT';
+    $('statusRight').textContent = 'Simulated impact logged. Vehicles separated to recovery distance.';
+  } else if(state.personEvent.active && state.personEvent.phase==='horn'){
+    banner.className='status-banner crit';
+    $('statusText').textContent = '🔊 HORN — PEDESTRIAN DETECTED ON HAUL ROAD';
+    $('statusRight').textContent = 'Sounding horn. Vehicle decelerating to a stop.';
+  } else if(state.personEvent.active && state.personEvent.phase==='moving_left'){
+    banner.className='status-banner warn';
+    $('statusText').textContent = '🚶 PEDESTRIAN MOVING LEFT — CLEARING MAIN LANE';
+    $('statusRight').textContent = 'Same left/opposite-lane clear path as empty-truck manoeuvre.';
+  } else if(state.personEvent.active && state.personEvent.phase==='holding_left'){
+    banner.className='status-banner warn';
+    $('statusText').textContent = '🚶 PEDESTRIAN IN LEFT LANE — WAIT UNTIL TRUCK ≥30 m AWAY';
+    $('statusRight').textContent = 'Main lane clear. Pedestrian holds until gap reaches 30 m.';
+  } else if(state.personEvent.active && state.personEvent.phase==='cleared'){
+    banner.className='status-banner safe';
+    $('statusText').textContent = '✅ PEDESTRIAN CLEAR — TRUCK ≥30 m AWAY';
+    $('statusRight').textContent = 'Normal operation resumed.';
+  } else if(state.conflict.active && state.conflict.commMode && state.conflict.phase==='comm_blocked_stop'){
+    banner.className='status-banner safe';
+    $('statusText').textContent = '🟢 SAFE OPERATION — BOTH VEHICLES STOPPED';
+    $('statusRight').textContent = 'COMMUNICATION ERROR + OPPOSITE LANE BLOCKED — vehicles held safely.';
+  } else if(state.autoStop.engaged){
+    banner.className='status-banner crit';
+    $('statusText').textContent = state.ego.speed > 0.5 ? '🛑 AUTO EMERGENCY STOP — DECELERATING' : '🛑 AUTO STOP ACTIVE — VEHICLE HALTED';
+    $('statusRight').textContent = state.autoStop.reason==='comm' ? 'Reason: communication lost >10s (local fail-safe)' :
+                                    state.autoStop.reason==='person' ? 'Reason: pedestrian detected on haul road' :
+                                    state.autoStop.reason==='rock' ? 'Reason: rock on main lane + opposite lane blocked' :
+                                    'Reason: CRITICAL risk threshold reached';
+  } else if(state.rockEvent.active && state.rockEvent.phase==='blocked_stop'){
+    banner.className='status-banner crit';
+    $('statusText').textContent = '🪨 ROCK BLOCKS MAIN LANE — VEHICLE STOPPED';
+    $('statusRight').textContent = 'Opposite lane blocked. Control station notified.';
+  } else if(state.rockEvent.active && (state.rockEvent.phase==='moving_left' || state.rockEvent.phase==='overtaking')){
+    banner.className='status-banner warn';
+    $('statusText').textContent = '🪨 ROCK AHEAD — BYPASSING VIA LEFT LANE';
+    $('statusRight').textContent = 'Rock stays on main lane (does not move).';
+  } else if(state.failures.lidar || !state.sensors.lidar){
+    banner.className='status-banner warn';
+    $('statusText').textContent = '⚠ LiDAR FAULTED — VEHICLE SLOWING';
+    $('statusRight').textContent = 'Distance sensing unavailable. Conservative reduced-speed mode active.';
+  } else if(state.failures.thermal || !state.sensors.thermal){
+    banner.className='status-banner warn';
+    $('statusText').textContent = '⚠ THERMAL CAMERA FAULTED — VEHICLE SLOWING';
+    $('statusRight').textContent = 'Object classification degraded. Conservative reduced-speed mode active.';
+  } else {
+    banner.className='status-banner '+cls;
+    $('statusText').textContent = txt;
+    $('statusRight').textContent = risk.status==='crit' ? 'Emergency stopping procedure required.' :
+                                    (risk.uncertain ? 'Sensor uncertainty — conservative warning active' : 'Sensor fusion nominal');
+  }
+
+  // risk badge
+  $('riskCircle').className='risk-circle '+cls;
+  $('riskNum').textContent = risk.score;
+  $('riskHeadline').className='headline '+cls;
+  $('riskHeadline').textContent = txt.replace(/^[^ ]+ /,'');
+  $('riskDesc').textContent = risk.status==='safe' ?
+    'Distance exceeds the dynamically calculated safe stopping margin for current speed and visibility.' :
+    risk.status==='warn' ?
+    'Actual distance is closing on the calculated safe distance. Reduce speed and increase following/approach margin.' :
+    'Actual distance is critically below the calculated safe stopping distance. Immediate emergency stopping procedure required.';
+
+  // driver cabin
+  $('cSpeed').textContent = state.ego.speed.toFixed(0)+' km/h';
+  $('cVis').textContent = state.visibility+' m';
+  const sensorDownForAI = state.failures.thermal || !state.sensors.thermal;
+  const objLabel = !state.ai.on ? 'AI OFF' : (sensorDownForAI || state.ai.conf < 60) ? 'UNCERTAIN OBJECT' : state.ai.objType.toUpperCase();
+  $('cObj').textContent = objLabel;
+  $('cDist').textContent = distance.toFixed(1)+' m';
+  $('cRisk').textContent = risk.score+'/100';
+  $('cStatus').className='v '+cls; $('cStatus').textContent = state.autoStop.engaged ? 'AUTO-STOP' : risk.status.toUpperCase();
+  $('cThermal').textContent = (state.failures.thermal? 'UNAVAILABLE' : state.sensors.thermal? 'OK':'OFF');
+  $('cThermal').className='v '+(state.failures.thermal?'crit':state.sensors.thermal?'dim':'warn');
+  $('cLidar').textContent = (state.failures.lidar? 'UNAVAILABLE' : state.sensors.lidar? 'OK':'OFF');
+  $('cLidar').className='v '+(state.failures.lidar?'crit':state.sensors.lidar?'dim':'warn');
+  $('cComm').textContent = state.sensors.comm && !state.failures.comm ? 'LINKED' : 'LOST — LOCAL FAIL-SAFE';
+  $('cComm').className='v '+(state.sensors.comm && !state.failures.comm ? 'dim':'crit');
+  $('cSafeDist').textContent = risk.model.safeDist.toFixed(1)+' m';
+
+  // active fault summary — always visible, per "any fault must be displayed"
+  const activeFaults=[];
+  if(state.failures.thermal) activeFaults.push('THERMAL');
+  if(state.failures.lidar) activeFaults.push('LIDAR');
+  if(state.failures.comm) activeFaults.push('COMMS');
+  if(!state.sensors.thermal) activeFaults.push('THERMAL OFF');
+  if(!state.sensors.lidar) activeFaults.push('LIDAR OFF');
+  if(!state.sensors.gps) activeFaults.push('GPS OFF');
+  const faultsEl=$('cFaults');
+  if(activeFaults.length){
+    faultsEl.textContent = '⚠ '+activeFaults.join(', ');
+    faultsEl.className='v crit';
+  } else {
+    faultsEl.textContent = 'None';
+    faultsEl.className='v safe';
+  }
+
+  // fusion table
+  const confText = state.ai.on ? (state.failures.thermal || !state.sensors.thermal ? 'UNCERTAIN OBJECT — CONSERVATIVE WARNING' : state.ai.objType.toUpperCase()+' — '+state.ai.conf+'%') : 'AI DISABLED';
+  $('fClass').textContent = confText;
+  $('fDist').textContent = (state.failures.lidar || !state.sensors.lidar) ? 'LIDAR UNAVAILABLE' : distance.toFixed(1)+' m';
+  $('fGps').textContent = state.sensors.gps ? 'OK' : 'OFF';
+  $('fSpeed').textContent = state.ego.speed.toFixed(0)+' km/h';
+  $('fRel').textContent = risk.relSpeed.toFixed(1)+' km/h';
+  $('fSafe').textContent = risk.model.safeDist.toFixed(1)+' m';
+  if($('fRecSpeed')) $('fRecSpeed').textContent = (risk.model.recMaxSpeed != null ? risk.model.recMaxSpeed : recommendedMaxSpeedKmh())+' km/h';
+
+  // control room
+  $('crEgoSpeed').textContent = state.ego.speed;
+  $('crEgoRisk').textContent = risk.score;
+  $('crEgoStatus').innerHTML = '<span class="tag '+cls+'">'+risk.status.toUpperCase()+'</span>';
+  const otherRiskApprox = Math.max(0, Math.round(risk.score*0.35));
+  $('crOtherSpeed').textContent = state.other.speed;
+  $('crOtherRisk').textContent = otherRiskApprox;
+  $('crOtherStatus').innerHTML = '<span class="tag '+(otherRiskApprox>state.thresholds.warn?'crit':otherRiskApprox>state.thresholds.safe?'warn':'safe')+'">'+(otherRiskApprox>state.thresholds.warn?'CRITICAL':otherRiskApprox>state.thresholds.safe?'WARNING':'SAFE')+'</span>';
+
+  const commLinked = state.sensors.comm && !state.failures.comm;
+  $('crCommStatus').textContent = commLinked ? 'COMMUNICATION LINKED' : 'COMMUNICATION LOST';
+  $('crCommStatus').className = 'v '+(commLinked?'safe':'crit');
+
+  $('failsafeMode').textContent = commLinked ? 'NORMAL — CONTROL ROOM LINKED' : 'LOCAL FAIL-SAFE MODE — VEHICLE SENSORS ACTIVE';
+  $('failsafeMode').className = 'v '+(commLinked?'safe':'warn');
+
+  const alertBox=$('crAlertBox');
+  if(risk.status==='crit' && commLinked){
+    alertBox.innerHTML = '<div class="note" style="border-color:var(--crit);color:var(--crit);margin-top:8px;">🚨 CRITICAL ALERT<br><b>TRUCK-01 — HIGH COLLISION RISK</b></div>';
+  } else if(risk.status==='crit' && !commLinked){
+    alertBox.innerHTML = '<div class="note" style="border-color:var(--crit);color:var(--crit);margin-top:8px;">🚨 LOCAL CRITICAL WARNING (control room not reachable — comms lost)</div>';
+  } else {
+    alertBox.innerHTML='';
+  }
+
+  // sensor chips (reflect toggle-off as well as failure)
+  reflectChip('thermal', state.failures.thermal, state.sensors.thermal);
+  reflectChip('lidar', state.failures.lidar, state.sensors.lidar);
+  if(state.failures.thermal || !state.sensors.thermal){
+    $('thermalBody').textContent = 'THERMAL CAMERA FAULTED — classification unavailable. Vehicle slowed.';
+  } else {
+    $('thermalBody').textContent = confText;
+  }
+  if(state.failures.lidar || !state.sensors.lidar){
+    $('lidarBody').textContent = 'LiDAR FAULTED — distance measurement unavailable. Vehicle slowed.';
+  } else {
+    $('lidarBody').textContent = 'OBJECT DETECTED — '+distance.toFixed(1)+' m';
+  }
+
+  // flow diagram highlight
+  highlightFlow(risk.status);
+
+  // MineGuard Intelligence panel (fog / low-visibility SOP)
+  updateMineGuardIntel(distance, risk);
+
+  // event timeline transitions
+  if(state.lastEventStatus !== risk.status){
+    if(risk.status==='warn') addTimelineEvent('warn','Risk elevated to WARNING — reduce speed advised.');
+    if(risk.status==='crit') addTimelineEvent('crit','Risk elevated to CRITICAL — emergency stopping procedure required.');
+    if(risk.status==='safe' && state.lastEventStatus) addTimelineEvent('safe','Risk returned to SAFE.');
+    state.lastEventStatus = risk.status;
+  }
+}
+
+function updateMineGuardIntel(distance, risk){
+  const model = risk.model || computeSafeDistance();
+  const rec = model.recMaxSpeed != null ? model.recMaxSpeed : recommendedMaxSpeedKmh();
+  const health = risk.sensorHealth != null ? risk.sensorHealth : sensorHealthScore();
+  const over = state.ego.speed - rec;
+
+  const elRec = $('mgRecSpeed');
+  if(!elRec) return;
+
+  elRec.textContent = rec+' km/h';
+  elRec.className = 'v '+(over>3?'warn':over>0?'dim':'safe');
+
+  const policyEl = $('mgPolicy');
+  if(state.fogMode==='dense' || state.visibility < 25){
+    policyEl.textContent = 'DENSE FOG PROTOCOL';
+    policyEl.className = 'v crit';
+  } else if(state.fogMode==='light' || state.visibility < 80){
+    policyEl.textContent = 'LIGHT FOG PROTOCOL';
+    policyEl.className = 'v warn';
+  } else {
+    policyEl.textContent = 'CLEAR — STANDARD HAUL';
+    policyEl.className = 'v safe';
+  }
+
+  $('mgMu').textContent = (model.mu != null ? model.mu : surfaceFriction()).toFixed(2);
+  $('mgDecel').textContent = (model.decel != null ? model.decel : achievableDecel()).toFixed(2)+' m/s²';
+
+  const healthEl = $('mgHealth');
+  healthEl.textContent = health+' %';
+  healthEl.className = 'v '+(health>=80?'safe':health>=50?'warn':'crit');
+
+  const sightEl = $('mgSight');
+  const stop = model.stoppingDist || 0;
+  if(state.visibility >= stop * 1.15){
+    sightEl.textContent = 'SIGHT OK ('+state.visibility+' m ≥ stop '+stop.toFixed(0)+' m)';
+    sightEl.className = 'v safe';
+  } else if(state.visibility >= stop * 0.85){
+    sightEl.textContent = 'MARGINAL — reduce speed';
+    sightEl.className = 'v warn';
+  } else {
+    sightEl.textContent = 'SIGHT < STOPPING — HIGH RISK';
+    sightEl.className = 'v crit';
+  }
+
+  // Human-readable advisory for SIH judges / operators
+  const tips = [];
+  if(state.fogMode==='dense' || state.visibility < 25){
+    tips.push('Dense fog: hold ≤ '+rec+' km/h, increase following gap, rely on thermal + LiDAR fusion.');
+  } else if(state.fogMode==='light' || state.visibility < 80){
+    tips.push('Light fog: adaptive speed limit '+rec+' km/h; keep V2X link to control room.');
+  } else {
+    tips.push('Visibility adequate for standard haul; policy max '+rec+' km/h.');
+  }
+  if(over > 2) tips.push('Current speed exceeds fog SOP by '+over.toFixed(0)+' km/h — advisory braking active.');
+  if(state.failures.lidar || !state.sensors.lidar) tips.push('LiDAR faulted: ranging degraded — maximum caution.');
+  if(state.failures.thermal || !state.sensors.thermal) tips.push('Thermal faulted: classification uncertain.');
+  if(state.dust) tips.push('Dust reduces contrast and surface µ — extra buffer applied.');
+  if(state.rain) tips.push('Wet haul surface: lower friction, larger safe gap.');
+  if(state.ego.load==='loaded') tips.push('Loaded iron-ore truck: longer braking distance vs empty.');
+  if(health < 50) tips.push('Sensor health critical — consider holding vehicle until systems recover.');
+
+  $('mgAdvice').innerHTML = '<b>Advisory:</b> '+tips.join(' ');
+}
+function reflectChip(kind, failed, on){
+  const chip=$(kind+'Chip');
+  if(failed){ chip.className='status-chip fail'; chip.textContent='FAILED'; }
+  else if(!on){ chip.className='status-chip deg'; chip.textContent='OFF'; }
+  else { chip.className='status-chip ok'; chip.textContent='OK'; }
+}
+
+function addTimelineEvent(cls, text){
+  const tl=$('timeline');
+  const div=document.createElement('div');
+  div.className='tl-item '+cls;
+  div.innerHTML='<span class="t">T+'+Math.floor(state.simTime)+'s</span><span>'+text+'</span>';
+  tl.insertBefore(div, tl.firstChild);
+  while(tl.children.length>40) tl.removeChild(tl.lastChild);
+}
+
+/* ============================================================
+   PHYSICS-BASED EFFICIENCY MODULE
+============================================================ */
+function updateMetrics(dt, risk){
+  const m = state.metrics;
+  const v = state.ego.speed;
+  const vMs = kmh2ms(v);
+  const prevPos = m.lastPos;
+  const deltaPos = state.ego.pos - prevPos;
+  m.lastPos = state.ego.pos;
+
+  m.speedSamples.push(v);
+  if(m.speedSamples.length>600) m.speedSamples.shift();
+  if(v >= 2) m.movingTime += dt;
+  else m.stopTime += dt;
+
+  // Productive travel is forward motion only. Reverse movement is tracked separately.
+  if(deltaPos * state.ego.dir > 0) m.productiveDistance += Math.abs(deltaPos);
+  else if(Math.abs(deltaPos) > 0.0001) m.reverseDistance += Math.abs(deltaPos);
+
+  // Physics-based traction energy estimate. Values are explicit model assumptions,
+  // so the result is reproducible rather than a fabricated percentage.
+  const massKg = state.ego.load==='loaded' ? 120000 : 70000;
+  const Crr = 0.012;
+  const CdA = 8.0;
+  const airDensity = state.visibility < 60 ? 1.05 : 1.225;
+  const grade = 0;
+  const g = 9.81;
+  const rollingN = massKg * g * Crr;
+  const aeroN = 0.5 * airDensity * CdA * vMs * vMs;
+  const acceleration = dt>0 ? (vMs - (m._prevSpeedMs || vMs))/dt : 0;
+  const accelN = Math.max(0, massKg * acceleration);
+  const gradeN = massKg * g * grade;
+  const tractiveForce = Math.max(0, rollingN + aeroN + accelN + gradeN);
+  const wheelPowerW = tractiveForce * vMs;
+  const drivetrainEff = state.ego.load==='loaded' ? 0.88 : 0.90;
+  const auxPowerW = 1800;
+  m.energyKwh += ((wheelPowerW / drivetrainEff) + auxPowerW) * dt / 3600000;
+  m._prevSpeedMs = vMs;
+
+  if(risk.status==='warn' && m.lastStatus!=='warn') m.warnCount++;
+  if(risk.status==='crit' && m.lastStatus!=='crit'){ m.critCount++; m.delay += 6; }
+  m.lastStatus = risk.status;
+
+  const avg = m.speedSamples.reduce((a,b)=>a+b,0)/Math.max(1,m.speedSamples.length);
+  const session = Math.max(state.simTime, 0.001);
+  const productiveRatio = Math.max(0, Math.min(1, m.movingTime/session));
+  const usefulWorkKwh = Math.max(0.001, m.productiveDistance * (massKg*g*Crr) / 3600000);
+  const energyEff = Math.max(0, Math.min(100, usefulWorkKwh / Math.max(m.energyKwh,0.001) * 100));
+  const operationalEff = productiveRatio * 100;
+  const overall = 0.6 * energyEff + 0.4 * operationalEff;
+
+  // Safety–efficiency balance: productive operation while staying out of critical risk.
+  // Collisions and critical events penalise the score — mirrors the project goal.
+  const safetyFactor = Math.max(0.15, 1 - (m.critCount * 0.08) - (m.collisionCount * 0.25) - (m.warnCount * 0.02));
+  const balance = Math.max(0, Math.min(100, overall * safetyFactor));
+
+  $('eOverall').textContent = overall.toFixed(1)+' %';
+  $('eEnergyEff').textContent = energyEff.toFixed(1)+' %';
+  $('eOperationalEff').textContent = operationalEff.toFixed(1)+' %';
+  if($('eBalance')) $('eBalance').textContent = balance.toFixed(1)+' %';
+  $('eAvgSpeed').textContent = avg.toFixed(1)+' km/h';
+  $('eDistance').textContent = (m.productiveDistance/1000).toFixed(2)+' km';
+  $('eEnergy').textContent = m.energyKwh.toFixed(2)+' kWh';
+  $('eSessTime').textContent = Math.floor(state.simTime)+' s';
+  $('eMovingTime').textContent = Math.floor(m.movingTime)+' s';
+  $('eStopTime').textContent = Math.floor(m.stopTime)+' s';
+  $('eReverse').textContent = m.reverseDistance.toFixed(1)+' m';
+  $('eWarnCount').textContent = m.warnCount;
+  $('eCritCount').textContent = m.critCount;
+  $('eCollisionCount').textContent = m.collisionCount;
+  $('eDelay').textContent = Math.floor(m.delay)+' s';
+}
+
+/* ============================================================
+   FLOW DIAGRAM
+============================================================ */
+const flowStages = ['FOG/VISIBILITY','THERMAL+LIDAR','AI DETECTION','SENSOR FUSION','DIST+SPEED','SAFE DISTANCE','RISK SCORE','DRIVER WARNING','CONTROL ROOM','FAIL-SAFE'];
+(function buildFlow(){
+  const wrap=$('flowWrap');
+  flowStages.forEach((s,i)=>{
+    const n=document.createElement('div'); n.className='flow-node'; n.textContent=s; n.dataset.i=i;
+    wrap.appendChild(n);
+    if(i<flowStages.length-1){ const a=document.createElement('span'); a.className='flow-arrow'; a.textContent='→'; wrap.appendChild(a); }
+  });
+})();
+let flowPulse=0;
+function highlightFlow(status){
+  flowPulse = (flowPulse+1) % flowStages.length;
+  document.querySelectorAll('.flow-node').forEach((n,idx)=>{
+    n.classList.toggle('active', idx===flowPulse || (status==='crit' && idx===flowStages.length-1) || (status!=='safe' && idx===7));
+  });
+}
+
+/* ============================================================
+   CANVAS: ROAD / TOP-DOWN SIM
+============================================================ */
+const roadCanvas=$('roadCanvas'); const rctx=roadCanvas.getContext('2d');
+function fitCanvas(c){ const r=c.getBoundingClientRect(); c.width=r.width*devicePixelRatio; c.height=r.height*devicePixelRatio; }
+function resizeAll(){ fitCanvas(roadCanvas); fitCanvas($('thermalCanvas')); fitCanvas($('lidarCanvas')); }
+window.addEventListener('resize', resizeAll); resizeAll();
+
+let fogParticles = Array.from({length:70},()=>({x:Math.random(),y:Math.random(),r:20+Math.random()*50,sp:0.02+Math.random()*0.04}));
+
+function drawRoad(distance, risk){
+  const W=roadCanvas.width, H=roadCanvas.height; const dpr=devicePixelRatio;
+  rctx.clearRect(0,0,W,H);
+
+  const isBlind = state.scenario==='blindcorner';
+
+  // background — subtle sky-to-ground gradient for depth
+  const bgGrad = rctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0,'#0d1218'); bgGrad.addColorStop(0.35,'#0a0d10'); bgGrad.addColorStop(1,'#07090b');
+  rctx.fillStyle=bgGrad; rctx.fillRect(0,0,W,H);
+
+  const roadTop=H*0.34, roadBot=H*0.84;
+  const oppLaneTop=H*0.14, oppLaneBot=roadTop-4*dpr;
+  // road surface
+  if(!isBlind){
+    // opposite lane (used visually during overtake maneuvers)
+    const oGrad=rctx.createLinearGradient(0,oppLaneTop,0,oppLaneBot);
+    oGrad.addColorStop(0,'#221f1c'); oGrad.addColorStop(1,'#171410');
+    rctx.fillStyle=oGrad; rctx.fillRect(0,oppLaneTop,W,oppLaneBot-oppLaneTop);
+    rctx.strokeStyle='rgba(255,255,255,0.12)'; rctx.setLineDash([10*dpr,10*dpr]); rctx.lineWidth=1.5*dpr;
+    rctx.beginPath(); rctx.moveTo(0,oppLaneBot); rctx.lineTo(W,oppLaneBot); rctx.stroke(); rctx.setLineDash([]);
+    rctx.fillStyle='rgba(255,255,255,0.28)'; rctx.font=(8.5*dpr)+'px monospace'; rctx.textAlign='left';
+    rctx.fillText('LEFT-SIDE / OPPOSITE PASSING LANE', 8*dpr, oppLaneTop+13*dpr);
+
+    const grad=rctx.createLinearGradient(0,roadTop,0,roadBot);
+    grad.addColorStop(0,'#2b2620'); grad.addColorStop(1,'#1c1815');
+    rctx.fillStyle=grad; rctx.fillRect(0,roadTop,W,roadBot-roadTop);
+    // berms
+    rctx.fillStyle='#4a3d2c'; rctx.fillRect(0,roadTop-10*dpr,W,10*dpr); rctx.fillRect(0,roadBot,W,10*dpr);
+    // dashed centerline
+    rctx.strokeStyle='rgba(255,210,120,0.5)'; rctx.lineWidth=3*dpr; rctx.setLineDash([22*dpr,18*dpr]);
+    rctx.beginPath(); rctx.moveTo(0,(roadTop+roadBot)/2); rctx.lineTo(W,(roadTop+roadBot)/2); rctx.stroke();
+    rctx.setLineDash([]);
+  } else {
+    // Blind corner: bent road (L shape) rendered schematically
+    rctx.fillStyle='#2b2620';
+    rctx.fillRect(0, roadTop, W*0.55, roadBot-roadTop);
+    rctx.fillRect(W*0.40, 0, W*0.20, H);
+    rctx.fillStyle='#4a3d2c';
+    rctx.fillRect(0, roadTop-10*dpr, W*0.55, 10*dpr);
+    rctx.fillRect(0, roadBot, W*0.55, 10*dpr);
+    rctx.fillRect(W*0.40-10*dpr,0,10*dpr,H);
+    rctx.fillRect(W*0.60,0,10*dpr,H);
+  }
+
+  // Dedicated roadside turning bay used when the opposite lane is blocked.
+  if(!isBlind){
+    const bayY = roadBot - 58*dpr;
+    rctx.save();
+    // Small side opening cut directly into the main road shoulder.
+    rctx.fillStyle='rgba(214,161,59,0.12)';
+    rctx.strokeStyle='rgba(214,161,59,0.72)';
+    rctx.setLineDash([7*dpr,5*dpr]);
+    rctx.lineWidth=2*dpr;
+    rctx.beginPath();
+    rctx.moveTo(W*0.48, roadBot-3*dpr);
+    rctx.lineTo(W*0.48, roadBot-62*dpr);
+    rctx.lineTo(W*0.72, roadBot-62*dpr);
+    rctx.lineTo(W*0.72, roadBot-3*dpr);
+    rctx.stroke();
+    rctx.setLineDash([]);
+    rctx.fillStyle='rgba(255,220,130,0.82)'; rctx.font=(8.5*dpr)+'px monospace'; rctx.textAlign='center';
+    rctx.fillText('CLEARANCE BAY', W*0.60, roadBot-38*dpr);
+    if(state.conflict.active && state.conflict.phase==='turn_bay_wait'){
+      rctx.fillStyle='rgba(45,212,160,0.9)'; rctx.fillText('EMPTY TRUCK HOLDING HERE', W*0.60, roadBot-24*dpr);
+    }
+    rctx.restore();
+  }
+
+  const observerRef = state.viewRef || 'ego';
+  const targetRef = observerRef==='ego' ? 'other' : 'ego';
+  const observer = state[observerRef];
+  const target = state[targetRef];
+  const egoScreenX = W*0.24;
+  // Camera-relative longitudinal position: positive is always AHEAD of the selected truck.
+  // This makes TRUCK-02 perspective a true opposite-direction view instead of reusing TRUCK-01 coordinates.
+  const rel = (target.pos - observer.pos) * (observer.dir || 1);
+  const displayDistance = Math.max(0, Math.min(Math.abs(rel), 400));
+  // Fixed camera scale prevents the target from visually jumping sides when
+  // it passes the observer. The old adaptive scale exploded near 0 m.
+  const scale = 0.95*dpr;
+  let targetScreenX = egoScreenX + rel*scale;
+  // Clamp only at the canvas edge; preserve the true ahead/behind side.
+  targetScreenX = Math.max(28*dpr, Math.min(targetScreenX, W-28*dpr));
+  const mainLaneY = isBlind ? roadTop + (roadBot-roadTop)*0.55 : (roadTop+roadBot)/2;
+  const leftLaneY = isBlind ? roadTop + (roadBot-roadTop)*0.30 : (oppLaneTop+oppLaneBot)/2;
+  const turnBayY = roadBot - 6*dpr;
+  function laneYFor(ref, vehicle){
+    if(state.conflict.active && state.conflict.passRef===ref &&
+       ['reversing_empty','turning_clearance','turn_bay_wait','merge_main_after_turn'].includes(state.conflict.phase)){
+      if(state.conflict.phase==='turn_bay_wait') return turnBayY;
+      const blend = Math.max(0, Math.min(1, state.conflict.laneOffset));
+      return mainLaneY + (turnBayY-mainLaneY)*blend;
+    }
+    if(state.conflict.active && state.conflict.passRef===ref &&
+       ['moving_left','overtaking','returning_lane'].includes(state.conflict.phase)){
+      const blend = Math.max(0, Math.min(1, state.conflict.laneOffset));
+      return mainLaneY + (leftLaneY-mainLaneY)*blend;
+    }
+    // Ego rock-bypass lane blend
+    if(ref==='ego' && state.rockEvent.active &&
+       ['moving_left','overtaking','returning'].includes(state.rockEvent.phase)){
+      const blend = Math.max(0, Math.min(1, state.rockEvent.laneOffset||0));
+      return mainLaneY + (leftLaneY-mainLaneY)*blend;
+    }
+    return vehicle.lane==='left' ? leftLaneY : mainLaneY;
+  }
+  const observerY = laneYFor(observerRef, observer);
+  let targetY = laneYFor(targetRef, target);
+
+  // Maintain a clear visual gap between truck bodies while they share the same lane.
+  // This is a rendering safeguard only; the numerical distance remains the true value.
+  const visualTruckGap = 82*dpr;
+  const laneSeparationPx = Math.abs(targetY - observerY);
+  if(laneSeparationPx < 34*dpr && Math.abs(targetScreenX - egoScreenX) < visualTruckGap){
+    const side = rel < 0 ? -1 : 1;
+    targetScreenX = egoScreenX + side*visualTruckGap;
+    targetScreenX = Math.max(28*dpr, Math.min(targetScreenX, W-28*dpr));
+  }
+
+  // LiDAR range visualization
+  if(state.sensors.lidar && !state.failures.lidar){
+    const range = lidarEffectiveRange();
+    const rangePx = Math.min(range*scale, W*0.7);
+    rctx.beginPath();
+    rctx.fillStyle='rgba(58,200,232,0.06)';
+    rctx.arc(egoScreenX, observerY, rangePx, -0.9, 0.9);
+    rctx.lineTo(egoScreenX, observerY);
+    rctx.fill();
+    rctx.strokeStyle='rgba(58,200,232,0.35)'; rctx.lineWidth=1.5*dpr;
+    rctx.beginPath(); rctx.arc(egoScreenX, observerY, rangePx, -0.9, 0.9); rctx.stroke();
+  }
+
+  // Camera follows the selected truck. The target can appear ahead or behind.
+  targetY = laneYFor(targetRef, target);
+  const isPerson = state.ai.on && state.ai.objType==='Person';
+  const isRock = state.ai.on && state.ai.objType==='Rock';
+  let personScreenX = targetScreenX;
+  if(isPerson && targetRef==='other' && state.personEvent.active){
+    // Same left-lane mechanism as the empty truck: laneOffset 0→1 moves the
+    // pedestrian from the main haul lane into the left/opposite lane.
+    const blend = Math.max(0, Math.min(1, state.personEvent.laneOffset||0));
+    targetY = mainLaneY + (leftLaneY-mainLaneY)*blend;
+    // After reaching the left lane, walk further along it (clear of the truck).
+    if(state.personEvent.phase==='holding_left' || state.personEvent.phase==='cleared'){
+      const walk = Math.max(0, Math.min(1, state.personEvent.walkProgress||0));
+      personScreenX = targetScreenX + walk * 55 * dpr;
+      personScreenX = Math.max(28*dpr, Math.min(personScreenX, W-28*dpr));
+    }
+  }
+  // Rock stays on the main lane — it never moves to the left lane.
+  if(isRock && targetRef==='other'){
+    targetY = mainLaneY;
+  }
+  const withinVisibility = displayDistance <= state.visibility + 5;
+  const observerLabel = observerRef==='ego' ? 'TRUCK-01' : 'TRUCK-02';
+  const targetLabel = targetRef==='ego' ? 'TRUCK-01' : 'TRUCK-02';
+  // The selected truck is always shown facing the camera's forward direction.
+  drawTruck(egoScreenX, observerY, observerRef==='ego' ? '#3ac8e8' : '#e8a23a', observerLabel+' • VIEW', dpr, 1);
+  if(withinVisibility || !state.sensors.lidar || state.failures.lidar){
+    if(isPerson && targetRef==='other'){
+      drawPerson(personScreenX, targetY, dpr, displayDistance>state.visibility, state.personEvent.active);
+    } else if(isRock && targetRef==='other'){
+      drawRock(targetScreenX, targetY, dpr, displayDistance>state.visibility);
+    } else {
+      // Draw target using its direction relative to the selected camera.
+      const targetViewDir = (target.dir || 1) * (observer.dir || 1);
+      const reversingTarget = state.conflict.active && state.conflict.passRef===targetRef && state.conflict.phase==='reversing_empty';
+      const visualDir = reversingTarget ? -targetViewDir : targetViewDir;
+      drawTruck(targetScreenX, targetY, targetRef==='ego' ? '#3ac8e8' : '#e8a23a', reversingTarget ? targetLabel+' • REVERSE' : targetLabel, dpr, visualDir, displayDistance>state.visibility);
+    }
+  }
+  // Rock hazard labels
+  if(isRock && state.rockEvent.active){
+    rctx.textAlign='center'; rctx.font=(9.5*dpr)+'px monospace';
+    if(state.rockEvent.phase==='blocked_stop'){
+      rctx.fillStyle='#d63b3b';
+      rctx.fillText('🪨 ROCK BLOCKS MAIN LANE', targetScreenX, targetY-28*dpr);
+      rctx.fillText('VEHICLE STOPPED — LANE BLOCKED', targetScreenX, targetY+42*dpr);
+    } else if(state.rockEvent.phase==='moving_left' || state.rockEvent.phase==='overtaking'){
+      rctx.fillStyle='#e0a43b';
+      rctx.fillText('🪨 ROCK — BYPASS VIA LEFT LANE', targetScreenX, targetY-28*dpr);
+    } else if(state.rockEvent.phase==='returning'){
+      rctx.fillStyle='#39c98f';
+      rctx.fillText('🪨 ROCK CLEARED — RETURNING', targetScreenX, targetY-28*dpr);
+    }
+  }
+  // Pedestrian manoeuvre labels (mirror empty-truck phase labels)
+  if(isPerson && state.personEvent.active){
+    rctx.textAlign='center'; rctx.font=(9.5*dpr)+'px monospace';
+    if(state.personEvent.phase==='horn'){
+      rctx.fillStyle='#d63b3b';
+      rctx.fillText('🔊', personScreenX, targetY-34*dpr);
+      rctx.fillText('HORN — STOP', personScreenX, targetY+42*dpr);
+    } else if(state.personEvent.phase==='moving_left'){
+      rctx.fillStyle='#0e7fa3';
+      rctx.fillText('↖ PEDESTRIAN MOVING LEFT', personScreenX, targetY-28*dpr);
+    } else if(state.personEvent.phase==='holding_left'){
+      rctx.fillStyle='#d6a13b';
+      rctx.fillText('🚶 LEFT LANE — WAIT TRUCK ≥30 m', personScreenX, targetY-28*dpr);
+    } else if(state.personEvent.phase==='cleared'){
+      rctx.fillStyle='#39c98f';
+      rctx.fillText('✓ CLEAR — TRUCK ≥30 m AWAY', personScreenX, targetY-28*dpr);
+    }
+  }
+
+  // conflict-resolution indicators
+  if(state.conflict.active){
+    const yieldX = state.conflict.yieldRef==='ego' ? egoScreenX : targetScreenX;
+    const yieldY = state.conflict.yieldRef==='ego' ? observerY : targetY;
+    rctx.textAlign='center'; rctx.font=(9.5*dpr)+'px monospace';
+    if(state.conflict.phase==='yield_stop' || state.conflict.phase==='checking'){
+      rctx.fillStyle='#b4820f'; rctx.fillText('YIELDING (LOADED)', yieldX, yieldY+42*dpr);
+    } else if(state.conflict.phase==='reversing_empty'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#d63b3b'; rctx.fillText('◀◀ EMPTY TRUCK REVERSING', emptyX, emptyY+42*dpr);
+      rctx.fillStyle='#b4820f'; rctx.fillText('YIELDING (LOADED)', yieldX, yieldY+42*dpr);
+    } else if(state.conflict.phase==='turning_clearance'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#d6a13b'; rctx.fillText('↻ EMPTY TRUCK TURNING TO CLEAR LANE', emptyX, emptyY-28*dpr);
+      rctx.fillStyle='#b4820f'; rctx.fillText('YIELDING (LOADED)', yieldX, yieldY+42*dpr);
+    } else if(state.conflict.phase==='turn_bay_wait'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#d6a13b';
+      rctx.fillText(state.conflict.loadedHasPassed
+        ? '↻ EMPTY TRUCK AUTHORISED TO EXIT BAY'
+        : '↻ EMPTY TRUCK HOLDING IN BAY — WAIT FOR LOADED TO PASS', emptyX, emptyY-28*dpr);
+    } else if(state.conflict.phase==='merge_main_after_turn'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#39c98f'; rctx.fillText('↗ EMPTY TRUCK EXITING TURN BAY → MAIN ROAD', emptyX, emptyY-28*dpr);
+    } else if(state.conflict.phase==='clearing_lane'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#39c98f'; rctx.fillText('EMPTY TRUCK CLEARING LOADED TRUCK LANE', emptyX, emptyY-28*dpr);
+    } else if(state.conflict.phase==='moving_left'){
+      const emptyX = state.conflict.passRef==='ego' ? egoScreenX : targetScreenX;
+      const emptyY = state.conflict.passRef==='ego' ? observerY : targetY;
+      rctx.fillStyle='#0e7fa3'; rctx.fillText('↖ EMPTY TRUCK MOVING LEFT', emptyX, emptyY-28*dpr);
+      rctx.fillStyle='#b4820f'; rctx.fillText('YIELDING (LOADED)', yieldX, yieldY+42*dpr);
+    } else if(state.conflict.phase==='overtaking'){
+      rctx.fillStyle='#0e7fa3'; rctx.fillText('EMPTY TRUCK OVERTAKING — LEFT-SIDE / OPPOSITE LANE', (egoScreenX+targetScreenX)/2, oppLaneTop+22*dpr);
+      rctx.fillStyle='#b4820f'; rctx.fillText('YIELDING (LOADED)', yieldX, yieldY+42*dpr);
+    } else if(state.conflict.phase==='mutual_caution'){
+      if(state.conflict.priorityAssigned){
+        const prLabel = state.conflict.priorityRef==='ego' ? 'TRUCK-01 PROCEEDING (DISPATCH RULE)' : 'TRUCK-02 PROCEEDING (DISPATCH RULE)';
+        rctx.fillStyle='#0e7fa3'; rctx.fillText(prLabel, (egoScreenX+targetScreenX)/2, mainLaneY+50*dpr);
+      } else {
+        rctx.fillStyle='#b4820f'; rctx.fillText('MUTUAL CAUTION SLOW-DOWN', (egoScreenX+targetScreenX)/2, mainLaneY+50*dpr);
+      }
+    } else if(state.conflict.phase==='gps_blocked_wait'){
+      rctx.fillStyle='#d63b3b'; rctx.fillText('🛰️ GPS DOWN — BOTH VEHICLES STOPPED', (egoScreenX+targetScreenX)/2, mainLaneY+50*dpr);
+    }
+  }
+
+  // distance label + line
+  rctx.strokeStyle='rgba(255,255,255,0.25)'; rctx.setLineDash([4*dpr,5*dpr]); rctx.lineWidth=1.2*dpr;
+  rctx.beginPath(); rctx.moveTo(egoScreenX,observerY-46*dpr); rctx.lineTo(targetScreenX,targetY-46*dpr); rctx.stroke();
+  rctx.setLineDash([]);
+  rctx.fillStyle='#cfe';
+  rctx.font=(11*dpr)+'px monospace';
+  rctx.textAlign='center';
+  rctx.fillText(displayDistance.toFixed(1)+' m', (egoScreenX+targetScreenX)/2, mainLaneY-52*dpr);
+
+  // required safe distance marker
+  const safeDist = risk.model.safeDist;
+  const safeX = rel>=0
+    ? egoScreenX + Math.min(safeDist*scale, W*0.9-egoScreenX)
+    : egoScreenX - Math.min(safeDist*scale, egoScreenX-0.1*W);
+  rctx.strokeStyle = risk.status==='safe' ? 'rgba(57,201,143,0.7)' : risk.status==='warn' ? 'rgba(232,201,58,0.8)' : 'rgba(239,75,75,0.85)';
+  rctx.lineWidth=2*dpr;
+  rctx.beginPath(); rctx.moveTo(safeX, roadTop-4*dpr); rctx.lineTo(safeX, roadBot+4*dpr); rctx.stroke();
+  rctx.fillStyle=rctx.strokeStyle; rctx.font=(9.5*dpr)+'px monospace'; rctx.textAlign='left';
+  rctx.fillText('SAFE DIST '+safeDist.toFixed(0)+'m', Math.min(safeX+4*dpr, W-90*dpr), roadTop-8*dpr);
+
+  // AI detection box on other truck if detected
+  if(state.ai.on && withinVisibility && state.sensors.thermal && !state.failures.thermal){
+    rctx.strokeStyle = state.ai.conf<60 ? '#e8c93a' : '#39c98f';
+    rctx.lineWidth=2*dpr;
+    rctx.strokeRect(targetScreenX-26*dpr, targetY-16*dpr, 52*dpr, 32*dpr);
+    rctx.fillStyle=rctx.strokeStyle; rctx.font=(9*dpr)+'px monospace'; rctx.textAlign='center';
+    const label = state.ai.conf<60 ? 'UNCERTAIN' : state.ai.objType.toUpperCase()+' '+state.ai.conf+'%';
+    rctx.fillText(label, targetScreenX, targetY-22*dpr);
+  }
+  if(!withinVisibility){
+    rctx.fillStyle='rgba(200,200,200,0.5)'; rctx.font=(10*dpr)+'px monospace'; rctx.textAlign='center';
+    rctx.fillText('BEYOND VISIBLE RANGE', targetScreenX, targetY+40*dpr);
+  }
+
+  // fog / dust / rain overlay
+  drawWeather(W,H,dpr);
+
+  // collision flash / shockwave
+  if(state.collisionFlash > 0){
+    const t = state.collisionFlash/26; // 1 -> 0
+    rctx.save();
+    rctx.fillStyle = `rgba(239,75,75,${0.35*t})`;
+    rctx.fillRect(0,0,W,H);
+    rctx.strokeStyle = `rgba(255,255,255,${0.8*t})`;
+    rctx.lineWidth = 3*dpr;
+    rctx.beginPath();
+    rctx.arc((egoScreenX+targetScreenX)/2, observerY, (1-t)*90*dpr, 0, Math.PI*2);
+    rctx.stroke();
+    rctx.fillStyle = `rgba(255,255,255,${Math.min(1,t*1.4)})`;
+    rctx.font = (16*dpr)+'px monospace'; rctx.textAlign='center';
+    rctx.fillText('💥 COLLISION', (egoScreenX+targetScreenX)/2, observerY-70*dpr);
+    rctx.restore();
+  }
+
+  // blind corner priority note
+  if(isBlind){
+    rctx.fillStyle='rgba(255,255,255,0.55)'; rctx.font=(10*dpr)+'px monospace'; rctx.textAlign='left';
+    rctx.fillText('BLIND CORNER — priority per mine traffic-management rules', 10*dpr, 18*dpr);
+  }
+}
+
+function drawPerson(x,y,dpr,ghost,alert){
+  rctx.save();
+  rctx.globalAlpha = ghost?0.35:1;
+  rctx.translate(x,y);
+  rctx.fillStyle = alert ? '#d63b3b' : '#eba549';
+  // simple pedestrian glyph: head + body
+  rctx.beginPath(); rctx.arc(0,-14*dpr,5*dpr,0,Math.PI*2); rctx.fill();
+  rctx.strokeStyle=rctx.fillStyle; rctx.lineWidth=3*dpr; rctx.lineCap='round';
+  rctx.beginPath(); rctx.moveTo(0,-9*dpr); rctx.lineTo(0,6*dpr); rctx.stroke();
+  rctx.beginPath(); rctx.moveTo(-7*dpr,-2*dpr); rctx.lineTo(7*dpr,-2*dpr); rctx.stroke();
+  rctx.beginPath(); rctx.moveTo(0,6*dpr); rctx.lineTo(-6*dpr,16*dpr); rctx.stroke();
+  rctx.beginPath(); rctx.moveTo(0,6*dpr); rctx.lineTo(6*dpr,16*dpr); rctx.stroke();
+  rctx.restore();
+  rctx.fillStyle='#fff'; rctx.font=(9*dpr)+'px monospace'; rctx.textAlign='center';
+  rctx.fillText('PERSON', x, y+30*dpr);
+}
+function drawRock(x,y,dpr,ghost){
+  rctx.save();
+  rctx.globalAlpha = ghost?0.35:1;
+  rctx.translate(x,y);
+  // Layered irregular boulder
+  rctx.fillStyle='#6a5a48';
+  rctx.beginPath();
+  rctx.moveTo(-22*dpr, 8*dpr);
+  rctx.lineTo(-18*dpr,-6*dpr);
+  rctx.lineTo(-8*dpr,-16*dpr);
+  rctx.lineTo(4*dpr,-18*dpr);
+  rctx.lineTo(16*dpr,-10*dpr);
+  rctx.lineTo(22*dpr, 2*dpr);
+  rctx.lineTo(14*dpr, 12*dpr);
+  rctx.lineTo(-10*dpr, 14*dpr);
+  rctx.closePath();
+  rctx.fill();
+  rctx.fillStyle='#8a7a62';
+  rctx.beginPath();
+  rctx.moveTo(-10*dpr,-4*dpr);
+  rctx.lineTo(0,-12*dpr);
+  rctx.lineTo(10*dpr,-6*dpr);
+  rctx.lineTo(6*dpr, 4*dpr);
+  rctx.lineTo(-6*dpr, 4*dpr);
+  rctx.closePath();
+  rctx.fill();
+  rctx.strokeStyle='rgba(0,0,0,0.35)';
+  rctx.lineWidth=1.5*dpr;
+  rctx.beginPath();
+  rctx.moveTo(-22*dpr, 8*dpr);
+  rctx.lineTo(-18*dpr,-6*dpr);
+  rctx.lineTo(-8*dpr,-16*dpr);
+  rctx.lineTo(4*dpr,-18*dpr);
+  rctx.lineTo(16*dpr,-10*dpr);
+  rctx.lineTo(22*dpr, 2*dpr);
+  rctx.lineTo(14*dpr, 12*dpr);
+  rctx.lineTo(-10*dpr, 14*dpr);
+  rctx.closePath();
+  rctx.stroke();
+  rctx.restore();
+  rctx.fillStyle='#e8dcc8'; rctx.font=(9*dpr)+'px monospace'; rctx.textAlign='center';
+  rctx.fillText('🪨 ROCK', x, y+28*dpr);
+}
+function drawTruck(x,y,color,label,dpr,dir,ghost){
+  rctx.save();
+  rctx.globalAlpha = ghost?0.35:1;
+  rctx.translate(x,y);
+  if(dir===-1) rctx.scale(-1,1);
+  rctx.fillStyle=color;
+  roundRect(rctx,-22*dpr,-11*dpr,44*dpr,22*dpr,4*dpr); rctx.fill();
+  rctx.fillStyle='#06090b';
+  roundRect(rctx,10*dpr,-9*dpr,10*dpr,18*dpr,2*dpr); rctx.fill();
+  // direction arrow
+  rctx.fillStyle='rgba(255,255,255,0.85)';
+  rctx.beginPath(); rctx.moveTo(24*dpr,0); rctx.lineTo(16*dpr,-6*dpr); rctx.lineTo(16*dpr,6*dpr); rctx.closePath(); rctx.fill();
+  rctx.restore();
+  rctx.fillStyle='#fff'; rctx.font=(9*dpr)+'px monospace'; rctx.textAlign='center';
+  rctx.fillText(label, x, y+30*dpr);
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+
+function drawWeather(W,H,dpr){
+  const density = state.fogMode==='dense'?0.85:state.fogMode==='light'?0.45:0.12;
+  const extra = (state.dust?0.15:0)+(state.rain?0.05:0);
+  rctx.save();
+  fogParticles.forEach(p=>{
+    p.x += p.sp*0.01;
+    if(p.x>1.2) p.x=-0.2;
+    const alpha = (density+extra)*0.55*(0.5+Math.random()*0.15);
+    rctx.beginPath();
+    rctx.fillStyle = state.dust ? `rgba(150,120,80,${alpha})` : `rgba(200,210,215,${alpha})`;
+    rctx.arc(p.x*W, p.y*H, p.r*dpr*0.6, 0, Math.PI*2);
+    rctx.fill();
+  });
+  // overall fog veil proportional to density
+  rctx.fillStyle=`rgba(190,200,205,${Math.min(0.55,density*0.5)})`;
+  rctx.fillRect(0,0,W,H);
+  if(state.rain){
+    rctx.strokeStyle='rgba(180,210,230,0.25)'; rctx.lineWidth=1*dpr;
+    for(let i=0;i<40;i++){
+      const rx=Math.random()*W, ry=Math.random()*H;
+      rctx.beginPath(); rctx.moveTo(rx,ry); rctx.lineTo(rx-4*dpr,ry+14*dpr); rctx.stroke();
+    }
+  }
+  rctx.restore();
+}
+
+/* ============================================================
+   THERMAL CANVAS
+============================================================ */
+const thermalCanvas=$('thermalCanvas'); const tctx=thermalCanvas.getContext('2d');
+function drawThermal(risk){
+  const W=thermalCanvas.width,H=thermalCanvas.height;
+  tctx.clearRect(0,0,W,H);
+  const grad=tctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'#050014'); grad.addColorStop(0.5,'#3a0060'); grad.addColorStop(1,'#050014');
+  tctx.fillStyle=grad; tctx.fillRect(0,0,W,H);
+
+  if(state.failures.thermal || !state.sensors.thermal){
+    tctx.fillStyle='rgba(239,75,75,0.85)'; tctx.font=(11*devicePixelRatio)+'px monospace'; tctx.textAlign='center';
+    tctx.fillText(state.failures.thermal?'THERMAL SENSOR UNAVAILABLE':'SENSOR OFF', W/2, H/2);
+    return;
+  }
+  // heat blob for object
+  const heatX = W*0.62, heatY=H*0.55;
+  const hg = tctx.createRadialGradient(heatX,heatY,4,heatX,heatY,60*devicePixelRatio);
+  const conf=state.ai.conf;
+  const hue = conf>75?60:conf>50?30:10;
+  hg.addColorStop(0, `hsla(${hue},100%,65%,0.95)`);
+  hg.addColorStop(0.5, `hsla(${hue-20},100%,45%,0.55)`);
+  hg.addColorStop(1, 'rgba(0,0,0,0)');
+  tctx.fillStyle=hg; tctx.beginPath(); tctx.arc(heatX,heatY,55*devicePixelRatio,0,Math.PI*2); tctx.fill();
+
+  // small machinery heat spot
+  tctx.fillStyle='hsla(45,100%,60%,0.4)'; tctx.beginPath(); tctx.arc(W*0.22,H*0.3,14*devicePixelRatio,0,Math.PI*2); tctx.fill();
+
+  tctx.strokeStyle = conf<60 ? '#e8c93a':'#39c98f';
+  tctx.lineWidth=1.5*devicePixelRatio;
+  tctx.strokeRect(heatX-30*devicePixelRatio,heatY-22*devicePixelRatio,60*devicePixelRatio,44*devicePixelRatio);
+}
+
+/* ============================================================
+   LIDAR CANVAS
+============================================================ */
+const lidarCanvas=$('lidarCanvas'); const lctx=lidarCanvas.getContext('2d');
+function lidarEffectiveRange(){
+  const base=200;
+  const fogPenalty = state.fogMode==='dense'?0.18:state.fogMode==='light'?0.55:1;
+  const dustPenalty = state.dust?0.85:1;
+  const rainPenalty = state.rain?0.9:1;
+  return base*fogPenalty*dustPenalty*rainPenalty;
+}
+function drawLidar(distance, risk){
+  const W=lidarCanvas.width,H=lidarCanvas.height;
+  lctx.clearRect(0,0,W,H);
+  lctx.fillStyle='#05080a'; lctx.fillRect(0,0,W,H);
+  const cx=W*0.15, cy=H*0.5;
+
+  if(state.failures.lidar || !state.sensors.lidar){
+    lctx.fillStyle='rgba(239,75,75,0.85)'; lctx.font=(11*devicePixelRatio)+'px monospace'; lctx.textAlign='center';
+    lctx.fillText(state.failures.lidar?'LIDAR UNAVAILABLE':'SENSOR OFF', W/2, H/2);
+    return;
+  }
+  const range=lidarEffectiveRange();
+  const scale=(W*0.8)/300;
+
+  // sweep arcs
+  lctx.strokeStyle='rgba(58,200,232,0.35)'; lctx.lineWidth=1*devicePixelRatio;
+  for(let r=40;r<=range;r+=40){
+    lctx.beginPath(); lctx.arc(cx,cy,r*scale,-0.55,0.55); lctx.stroke();
+  }
+  // points cloud (random scan dots up to range)
+  lctx.fillStyle='rgba(58,200,232,0.55)';
+  for(let i=0;i<50;i++){
+    const ang=(Math.random()-0.5)*1.1;
+    const rr=Math.random()*range*0.98;
+    lctx.beginPath(); lctx.arc(cx+Math.cos(ang)*rr*scale, cy+Math.sin(ang)*rr*scale, 1.4*devicePixelRatio,0,Math.PI*2); lctx.fill();
+  }
+  // detected object marker
+  if(distance<=range){
+    const ox=cx+distance*scale, oy=cy;
+    lctx.fillStyle= risk.status==='crit'?'#ef4b4b':risk.status==='warn'?'#e8c93a':'#39c98f';
+    lctx.beginPath(); lctx.arc(ox,oy,5*devicePixelRatio,0,Math.PI*2); lctx.fill();
+  }
+  lctx.fillStyle='#7fd8ea'; lctx.font=(9.5*devicePixelRatio)+'px monospace'; lctx.textAlign='left';
+  lctx.fillText('RANGE '+range.toFixed(0)+'m', 6*devicePixelRatio, H-6*devicePixelRatio);
+
+  const lidarChip=$('lidarChip');
+  if(!state.failures.lidar){
+    if(range<60){ lidarChip.className='status-chip deg'; lidarChip.textContent='DEGRADED'; }
+    else { lidarChip.className='status-chip ok'; lidarChip.textContent='OK'; }
+  }
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+syncFogModeFromSlider();
+addTimelineEvent('safe','System initialised. Sensors nominal.');
+})();
+</script>
+</body>
+</html>
