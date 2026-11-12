@@ -1,68 +1,64 @@
-<div align="center">
+# Major Projects – Electrical & Electronics Engineering
 
-# SIVASAHOO.N
+**Sivasahoo.N** · Electrical Engineering · Embedded Systems · Industrial IoT · Automation
 
-### Electrical Engineering • Power Systems • Embedded Systems • IoT
-
-A working portfolio of engineering projects spanning electrical monitoring, automation, embedded firmware, renewable-energy concepts, and hardware prototyping.
-
-[![GitHub](https://img.shields.io/badge/GitHub-sivashaoo-181717?style=flat&logo=github)](https://github.com/sivashaoo)
-[![Mini Projects](https://img.shields.io/badge/Portfolio-Mini%20Projects-0A7EA4?style=flat&logo=arduino)](https://github.com/sivashaoo/mini-projects)
-[![Major Projects](https://img.shields.io/badge/Portfolio-Major%20Projects-2457A7?style=flat&logo=github)](https://github.com/sivashaoo/major-projects-)
-
-</div>
+A portfolio of larger engineering projects spanning electrical equipment monitoring, industrial safety, automation, sensor-based systems, and IoT prototypes. Each project includes concept documentation, firmware (where available), hardware notes, and clear scope statements.
 
 ---
 
-## About this repository
+## Featured Projects
 
-This repository organizes larger Electrical and Electronics Engineering projects with project descriptions, firmware, hardware connection notes, simulation materials, and implementation guidance where available.
-
-## Featured engineering projects
-
-| Project | Focus | Current scope / resources |
-|---|---|---|
-| **Mine Vehicle Safety in Low Visibility** | Industrial safety, sensing, simulation | System concept, safety logic, prototype planning, hardware notes, and interactive simulation — [open project](./mine-vehicle-safety/) |
-| **Transformer Health Monitoring** | Electrical equipment monitoring, IoT | Monitoring and protection concept — [open project](./transformer-health-monitoring/) |
-| **Smart Waste Segregation** | Sensors, motors, automation | Sensor-driven sorting prototype — [open project](./SMART-WASTE-SEGREGATION/) |
-| **Industrial Machine Health Monitoring — Project 3** | Condition monitoring | ESP32 analog vibration input, DS18B20 temperature sensing, and alert LED — [open project](./machine-health-monitoring/) |
-| **Project 1 — Soil Monitoring and Automated Irrigation** | Agriculture, sensing, relay control | Soil-moisture starter firmware, hysteresis, wiring and calibration notes — [open project](./soil-monitoring-irrigation/) |
-| **Project 4 — Wearable Vital-Sign and Sleep-Quality Monitoring** | Sensor interfacing | I²C bring-up template for MAX30102/MPU6050; current starter sketch scans for I²C devices and does not calculate vital signs — [open project](./wearable-vital-sign-sleep-monitoring/) |
-| **Project 7 — Sensor-Based Failure Detection and Maintenance Scheduling** | Fault detection | Generic analog threshold monitor and event counter — [open project](./sensor-failure-maintenance/) |
-| **Project 8 — Smart Retail Inventory and Customer-Experience Monitoring** | Load sensing, inventory | ESP32/HX711 load-cell starter template — [open project](./smart-retail-inventory/) |
-| **Project 10 — Connected Vehicle Performance and Remote Diagnostics** | Automotive sensor demonstration | Bench-top DS18B20 temperature monitor with local alert; not a full remote diagnostics or automotive-grade system — [open project](./connected-vehicle-diagnostics/) |
-
-## Engineering workflow
-
-1. **Define the problem** — document the objective, inputs, outputs, constraints, and safety considerations.
-2. **Design the system** — map sensors, controller, power, actuators, and communication interfaces.
-3. **Build and document** — maintain readable firmware, pin tables, and setup instructions.
-4. **Test and calibrate** — record test conditions, expected behavior, observed results, and limitations.
-5. **Improve iteratively** — track known issues and separate planned features from implemented features.
-
-## Technologies and areas
-
-- **Embedded development:** ESP32, Arduino, sensor interfacing, embedded C/C++
-- **Electrical engineering:** equipment monitoring, protection concepts, power-system applications
-- **Automation:** relay/actuator control, threshold logic, system integration
-- **Simulation and analysis:** MATLAB/Simulink where included in individual project documentation
-- **IoT:** connected monitoring concepts and dashboards where implemented
-
-## Documentation and verification standards
-
-- Each project README should state the objective, components, wiring, firmware setup, test procedure, and limitations.
-- Starter templates are labeled honestly and are not presented as verified production systems.
-- Hardware-dependent behavior must be tested on the actual board and modules before claiming successful operation.
-- Use suitable isolation, fuses, current limits, enclosures, and safe low-voltage test setups where appropriate.
-- Do not commit Wi-Fi passwords, API keys, tokens, or other secrets.
-
-## Explore more
-
-- **Mini projects:** [sivashaoo/mini-projects](https://github.com/sivashaoo/mini-projects)
-- **GitHub profile:** [github.com/sivashaoo](https://github.com/sivashaoo)
+| Project | Focus Area | Current Scope | Link |
+|---------|------------|---------------|------|
+| **Mine Vehicle Safety (Low Visibility)** | Industrial safety, sensing, simulation | System concept, safety logic, prototype planning, hardware notes | [Open](./mine-vehicle-safety/) |
+| **Transformer Health Monitoring** | Electrical equipment monitoring | Monitoring & protection concept | [Open](./transformer-health-monitoring/) |
+| **Smart Waste Segregation** | Sensors, motors, automation | Sensor-driven sorting prototype | [Open](./SMART-WASTE-SEGREGATION/) |
+| **Machine Health Monitoring** | Condition monitoring | ESP32 + vibration (analog) + DS18B20 temperature + alert LED | [Open](./machine-health-monitoring/) |
+| **Soil Monitoring & Automated Irrigation** | Agriculture, sensing, control | Soil-moisture starter firmware with hysteresis + wiring notes | [Open](./soil-monitoring-irrigation/) |
+| **Wearable Vital-Sign & Sleep Monitoring** | Sensor interfacing | I²C bring-up template (MAX30102 / MPU6050). Current sketch scans devices only | [Open](./wearable-vital-sign-sleep-monitoring/) |
+| **Sensor Failure Detection & Maintenance** | Fault detection | Generic analog threshold monitor + event counter | [Open](./sensor-failure-maintenance/) |
+| **Smart Retail Inventory** | Load sensing | ESP32 + HX711 load-cell starter template | [Open](./smart-retail-inventory/) |
+| **Connected Vehicle Diagnostics** | Automotive sensor demo | Bench-top DS18B20 temperature monitor with local alert (not full remote diagnostics) | [Open](./connected-vehicle-diagnostics/) |
 
 ---
 
-<div align="center">
-<sub>Project documentation is updated iteratively as implementations are developed and tested.</sub>
-</div>
+## Engineering Workflow
+
+Every project follows (or aims to follow) this process:
+
+1. **Define the problem** — objective, inputs, outputs, constraints, and safety considerations
+2. **Design the system** — sensors, controller, power, actuators, and communication
+3. **Build and document** — readable firmware, pin tables, and setup instructions
+4. **Test and calibrate** — record conditions, expected vs observed behaviour, and limitations
+5. **Improve iteratively** — clearly separate implemented features from planned features
+
+---
+
+## Technologies Used
+
+- **Embedded:** ESP32, Arduino, Embedded C/C++, sensor interfacing
+- **Electrical:** Equipment monitoring concepts, protection ideas, power-system applications
+- **Automation:** Relay/actuator control, threshold logic, system integration
+- **IoT:** Connected monitoring concepts and simple dashboards
+- **Simulation:** MATLAB/Simulink (where included in individual project folders)
+
+---
+
+## Documentation Standards
+
+- Each project README should clearly state: objective, components, wiring, firmware setup, test procedure, and limitations
+- Starter templates are labeled honestly and are **not** presented as verified production systems
+- Hardware-dependent behaviour must be tested on real boards and modules
+- Use proper isolation, fuses, current limits, and safe low-voltage setups where appropriate
+- Never commit Wi-Fi passwords, API keys, tokens, or other secrets
+
+---
+
+## Related Work
+
+- **Mini Projects (ESP32 / Arduino / Sensors)** → [sivashaoo/mini-projects](https://github.com/sivashaoo/mini-projects)
+- **GitHub Profile** → [github.com/sivashaoo](https://github.com/sivashaoo)
+
+---
+
+**Project documentation is updated iteratively as implementations are developed and tested.**
